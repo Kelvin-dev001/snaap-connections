@@ -1,9 +1,26 @@
 import axios from 'axios';
-console.log("API base URL:", process.env.REACT_APP_API_URL);
+
+// Determine backend API URL
+const apiBaseUrl =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5000/api'
+    : undefined);
+
+if (!apiBaseUrl) {
+  // Warn if missing in production (will break all API calls)
+  // eslint-disable-next-line no-console
+  console.warn(
+    "REACT_APP_API_URL is not set! Please define it in your Vercel environment variables."
+  );
+}
+
+// For debugging, shows which base URL is being used
+console.log("API base URL:", apiBaseUrl);
 
 // Configure axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: apiBaseUrl,
   timeout: 10000,
   withCredentials: true // Important for session/cookie auth!
 });
