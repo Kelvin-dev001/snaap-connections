@@ -3,15 +3,6 @@ import { Box, Typography, Grid, Card, CardActionArea, Avatar } from "@mui/materi
 import { Link } from "react-router-dom";
 import API from "../api/apiService"; // Adjust the import path if needed
 
-const colors = [
-  "linear-gradient(120deg, #6dd5ed 0%, #2193b0 100%)",
-  "linear-gradient(120deg, #1e3c72 0%, #2a5298 100%)",
-  "linear-gradient(120deg, #43cea2 0%, #185a9d 100%)",
-  "linear-gradient(120deg, #614385 0%, #516395 100%)",
-  "linear-gradient(120deg, #02aab0 0%, #00cdac 100%)",
-  "linear-gradient(120deg, #396afc 0%, #2948ff 100%)"
-];
-
 const ShopByBrandSection = () => {
   const [brands, setBrands] = useState([]);
 
@@ -36,31 +27,21 @@ const ShopByBrandSection = () => {
     <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "background.default" }}>
       <style>
         {`
-        @keyframes brand-glow {
-          0% { box-shadow: 0 0 0 0 rgba(30,60,114,0.14); }
-          50% { box-shadow: 0 4px 28px 0 rgba(30,60,114,0.22); }
-          100% { box-shadow: 0 0 0 0 rgba(30,60,114,0.14); }
-        }
-        @keyframes brandCardPop {
-          0%   { transform: scale(1);    }
-          50%  { transform: scale(1.06); }
-          100% { transform: scale(1);    }
-        }
-        .brand-card-flip {
+        .flip-card {
           perspective: 900px;
         }
-        .brand-card-inner {
+        .flip-card-inner {
           position: relative;
           width: 100%;
           height: 100%;
-          transition: transform 0.8s cubic-bezier(.4,2,.4,1);
+          transition: transform 0.7s cubic-bezier(.4,2,.4,1);
           transform-style: preserve-3d;
         }
-        .brand-card-flip:hover .brand-card-inner,
-        .brand-card-flip:focus .brand-card-inner {
+        .flip-card:hover .flip-card-inner,
+        .flip-card:focus .flip-card-inner {
           transform: rotateY(180deg);
         }
-        .brand-card-front, .brand-card-back {
+        .flip-card-front, .flip-card-back {
           position: absolute;
           width: 100%;
           height: 100%;
@@ -71,24 +52,14 @@ const ShopByBrandSection = () => {
           justify-content: center;
           border-radius: 18px;
         }
-        .brand-card-front {
-          background: rgba(255,255,255,0.8);
-          box-shadow: 0 2px 20px 0 rgba(109,213,237,0.07);
-          transition: box-shadow 0.4s;
-          border: 1.5px solid #e3f3ff;
-          animation: brand-glow 3.8s ease-in-out infinite;
+        .flip-card-front {
+          background: #fff;
+          color: #222;
         }
-        .brand-card-flip:hover .brand-card-front,
-        .brand-card-flip:focus .brand-card-front {
-          box-shadow: 0 8px 32px 0 #6dd5ed44, 0 1.5px 12px 0 #1e3c7233;
-          border-color: #6dd5ed;
-        }
-        .brand-card-back {
-          background: linear-gradient(120deg, #6dd5ed 0%, #1e3c72 100%);
-          color: #fff;
+        .flip-card-back {
+          background: #f5f7fa;
+          color: #1e3c72;
           transform: rotateY(180deg);
-          box-shadow: 0 4px 24px #1e3c7265;
-          border: 1.5px solid #6dd5ed;
         }
         `}
       </style>
@@ -113,21 +84,21 @@ const ShopByBrandSection = () => {
               style={{ textDecoration: "none" }}
             >
               <Card
-                className="brand-card-flip"
+                className="flip-card"
                 elevation={0}
                 sx={{
                   borderRadius: "20px",
-                  background: colors[idx % colors.length],
-                  color: "#fff",
-                  boxShadow: "0 4px 24px 0 rgba(30,60,114,0.13)",
+                  background: "#fff",
+                  color: "primary.main",
+                  boxShadow: "0 4px 24px 0 rgba(30,60,114,0.08)",
                   transition: "transform 0.35s cubic-bezier(.4,2,.4,1), box-shadow 0.25s",
                   cursor: "pointer",
                   position: "relative",
                   overflow: "visible",
+                  border: "none",
+                  minHeight: 160,
                   "&:hover": {
-                    transform: "translateY(-8px) scale(1.04)",
-                    boxShadow: "0 10px 32px 0 #1e3c72cc",
-                    animation: "brandCardPop 0.8s",
+                    boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
                     zIndex: 2
                   }
                 }}
@@ -136,7 +107,7 @@ const ShopByBrandSection = () => {
                 <CardActionArea
                   sx={{
                     borderRadius: "20px",
-                    minHeight: 128,
+                    minHeight: 160,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -145,9 +116,9 @@ const ShopByBrandSection = () => {
                     "&:focus-visible": { outline: "none" }
                   }}
                 >
-                  <Box className="brand-card-inner" sx={{ minHeight: 90 }}>
+                  <Box className="flip-card-inner" sx={{ width: "100%", height: "100%", minHeight: 90 }}>
                     {/* Front Face */}
-                    <Box className="brand-card-front">
+                    <Box className="flip-card-front">
                       {brand.logo ? (
                         <Avatar
                           src={brand.logo}
@@ -157,13 +128,9 @@ const ShopByBrandSection = () => {
                             width: 54,
                             height: 54,
                             mb: 1.5,
-                            bgcolor: "transparent",
-                            boxShadow: "0 2px 12px #6dd5ed22",
-                            objectFit: "contain",
-                            transition: "transform 0.5s cubic-bezier(.4,2,.4,1)",
-                            "&:hover": {
-                              transform: "scale(1.12) rotate(-7deg)",
-                            },
+                            bgcolor: "#fff",
+                            boxShadow: "none",
+                            objectFit: "contain"
                           }}
                         />
                       ) : (
@@ -173,7 +140,7 @@ const ShopByBrandSection = () => {
                             width: 54,
                             height: 54,
                             mb: 1.5,
-                            bgcolor: "#e3f3ff",
+                            bgcolor: "#fff",
                           }}
                         >
                           {brand.name?.charAt(0) || "?"}
@@ -187,35 +154,24 @@ const ShopByBrandSection = () => {
                           letterSpacing: 0.8,
                           fontSize: "1rem",
                           textAlign: "center",
-                          textShadow: "0 2px 10px #6dd5ed33",
+                          textShadow: "none",
                         }}
                       >
                         {brand.name}
                       </Typography>
                     </Box>
                     {/* Back Face */}
-                    <Box className="brand-card-back">
+                    <Box className="flip-card-back">
                       <Typography
                         variant="subtitle1"
-                        fontWeight={800}
+                        fontWeight={700}
                         sx={{
-                          fontSize: "1.08rem",
-                          letterSpacing: 0.7,
-                          textShadow: "0 2px 12px #1e3c7234",
+                          fontSize: "1.10rem",
+                          letterSpacing: ".4px",
+                          textAlign: "center"
                         }}
                       >
                         Shop {brand.name}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          mt: 1,
-                          opacity: 0.92,
-                          fontWeight: 500,
-                          letterSpacing: 0.2,
-                        }}
-                      >
-                        Explore latest {brand.name} devices
                       </Typography>
                     </Box>
                   </Box>
