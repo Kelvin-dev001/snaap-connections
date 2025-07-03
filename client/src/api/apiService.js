@@ -88,14 +88,15 @@ const API = {
   deleteReview: (reviewId) => api.delete(`/admin/reviews/${reviewId}`),
 
   // =======================
-  // Auth/Sessions
-  // =======================
-  // Log in as admin (password only)
-  login: ({ password }) => api.post('/auth/login', { password }, { withCredentials: true }),
-  // Log out admin
-  logout: () => api.post('/auth/logout', {}, { withCredentials: true }),
-  // Check admin session
-  checkAdmin: () => api.get('/auth/check', { withCredentials: true }),
+ // Auth/Sessions
+// =======================
+// Log in as admin (password only) -- updated endpoint!
+login: ({ password }) => api.post('/admin/login', { password }, { withCredentials: true }),
+// Log out admin
+logout: () => api.post('/admin/logout', {}, { withCredentials: true }),
+// Check admin session
+checkAdmin: () => api.get('/admin/check', { withCredentials: true }),
+
 };
 
 export default API;
