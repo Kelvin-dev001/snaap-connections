@@ -2,14 +2,39 @@ const express = require('express');
 const router = express.Router();
 const { upload, processUpload } = require('../middleware/upload');
 const Product = require('../models/Product');
-// const auth = require('../middleware/auth'); // Auth middleware temporarily disabled
+const multer = require('multer');
+const updatedUpload = upload.array('images', 10);
 
 // Helper function to generate SKU
 const generateSKU = (name, brand) => {
   return `${brand.slice(0, 3).toUpperCase()}-${name.slice(0, 3).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
 };
 
-// Client-facing routes (no auth required)
+// Helper for Absolute URLs
+function makeImageUrl(req, path) {
+  if (!path) return path;
+  if (path.startsWith('http')) return path;
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
+// Helper: handle existingImages from FormData (array or CSV)
+function getExistingImages(req) {
+  if (!req.body.existingImages) return [];
+  if (Array.isArray(req.body.existingImages)) return req.body.existingImages;
+  if (typeof req.body.existingImages === 'string' && req.body.existingImages.length > 0)
+    return req.body.existingImages.split(',');
+  return [];
+}
+
+// Helper: extract image URLs from multer files
+function getImageUrls(files) {
+  if (!files || files.length === 0) return [];
+  // Support both .url (if set by processUpload), or path fallback
+  return files.map(file => file.url || `/uploads/${file.filename}`);
+}
+
+// GET ALL PRODUCTS (client)
 router.get('/', async (req, res) => {
   try {
     const { category, brand, featured, limit, minPrice, maxPrice } = req.query;
@@ -28,10 +53,19 @@ router.get('/', async (req, res) => {
       .limit(parseInt(limit) || 20)
       .sort({ createdAt: -1 });
 
+    // Map images/thumbnails to absolute URLs
+    const productsWithAbsoluteImages = products.map(prod => ({
+      ...prod.toObject(),
+      images: Array.isArray(prod.images)
+        ? prod.images.map(img => makeImageUrl(req, img))
+        : [],
+      thumbnail: makeImageUrl(req, prod.thumbnail),
+    }));
+
     res.json({ 
       success: true, 
       count: products.length, 
-      products 
+      products: productsWithAbsoluteImages
     });
   } catch (err) {
     console.error('Error fetching products:', err);
@@ -43,6 +77,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET UNIQUE BRANDS
 router.get('/brands', async (req, res) => {
   try {
     const brands = await Product.distinct('brand');
@@ -60,6 +95,7 @@ router.get('/brands', async (req, res) => {
   }
 });
 
+// GET UNIQUE CATEGORIES
 router.get('/categories', async (req, res) => {
   try {
     const categories = await Product.distinct('category');
@@ -77,6 +113,7 @@ router.get('/categories', async (req, res) => {
   }
 });
 
+// GET SINGLE PRODUCT BY ID
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -87,9 +124,19 @@ router.get('/:id', async (req, res) => {
         message: 'Product not found'
       });
     }
+
+    // Map images/thumbnails to absolute URLs for single product
+    const productWithAbsoluteImages = {
+      ...product.toObject(),
+      images: Array.isArray(product.images)
+        ? product.images.map(img => makeImageUrl(req, img))
+        : [],
+      thumbnail: makeImageUrl(req, product.thumbnail),
+    };
+
     res.json({ 
       success: true, 
-      product 
+      product: productWithAbsoluteImages
     });
   } catch (err) {
     console.error('Error fetching product:', err);
@@ -101,32 +148,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Admin routes (auth temporarily disabled)
-// router.use(auth.admin);
-
-// --- MULTI-IMAGE UPLOAD HANDLING ---
-
-// Updated upload middleware to allow up to 10 files
-const multer = require('multer');
-const updatedUpload = upload.array('images', 10);
-
-// Helper: handle existingImages from FormData (array or CSV)
-function getExistingImages(req) {
-  if (!req.body.existingImages) return [];
-  if (Array.isArray(req.body.existingImages)) return req.body.existingImages;
-  if (typeof req.body.existingImages === 'string' && req.body.existingImages.length > 0)
-    return req.body.existingImages.split(',');
-  return [];
-}
-
-// Helper: extract image URLs from multer files
-function getImageUrls(files) {
-  if (!files || files.length === 0) return [];
-  // Support both .url (if set by processUpload), or path fallback
-  return files.map(file => file.url || `/uploads/${file.filename}`);
-}
-
-// PRODUCT CREATE
+// --- PRODUCT CREATE ---
 router.post('/', updatedUpload, (req, res, next) => {
   // Attach .url to each file for consistency
   if (req.files && Array.isArray(req.files)) {
@@ -149,13 +171,12 @@ router.post('/', updatedUpload, (req, res, next) => {
       });
     }
 
-   
     // Handle images
     const existingImages = getExistingImages(req);
     const newImages = getImageUrls(req.files);
     const images = [...existingImages, ...newImages];
 
-    // Build product data (adapt specs and all fields as needed for your schema)
+    // Build product data
     const productData = {
       name,
       price: Number(price),
@@ -189,9 +210,18 @@ router.post('/', updatedUpload, (req, res, next) => {
     const product = new Product(productData);
     const savedProduct = await product.save();
 
+    // Map images to absolute URL for response
+    const responseProduct = {
+      ...savedProduct.toObject(),
+      images: Array.isArray(savedProduct.images)
+        ? savedProduct.images.map(img => makeImageUrl(req, img))
+        : [],
+      thumbnail: makeImageUrl(req, savedProduct.thumbnail),
+    };
+
     res.status(201).json({
       success: true,
-      product: savedProduct
+      product: responseProduct
     });
   } catch (err) {
     console.error('Error creating product:', err);
@@ -223,7 +253,7 @@ router.post('/', updatedUpload, (req, res, next) => {
   }
 });
 
-// PRODUCT UPDATE
+// --- PRODUCT UPDATE ---
 router.put('/:id', updatedUpload, (req, res, next) => {
   if (req.files && Array.isArray(req.files)) {
     req.files.forEach(file => {
@@ -297,9 +327,18 @@ router.put('/:id', updatedUpload, (req, res, next) => {
       { new: true, runValidators: true }
     );
 
+    // Map images to absolute URL for response
+    const responseProduct = {
+      ...updatedProduct.toObject(),
+      images: Array.isArray(updatedProduct.images)
+        ? updatedProduct.images.map(img => makeImageUrl(req, img))
+        : [],
+      thumbnail: makeImageUrl(req, updatedProduct.thumbnail),
+    };
+
     res.json({
       success: true,
-      product: updatedProduct
+      product: responseProduct
     });
   } catch (err) {
     console.error('Error updating product:', err);
@@ -311,6 +350,7 @@ router.put('/:id', updatedUpload, (req, res, next) => {
   }
 });
 
+// --- PRODUCT DELETE ---
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);

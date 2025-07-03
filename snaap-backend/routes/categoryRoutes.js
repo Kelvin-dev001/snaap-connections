@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const Category = require('../models/category');
 
-// Setup multer for icon uploads
+// Multer setup for icon uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, 'uploads/categories/');
@@ -15,19 +15,38 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
+// Helper to make absolute URL
+function makeImageUrl(req, path) {
+  if (!path) return path;
+  if (path.startsWith('http')) return path;
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
+// GET all categories (icon as absolute URL)
 router.get('/', async (req, res) => {
   const categories = await Category.find();
-  res.json(categories);
+  const categoriesWithAbsoluteIcon = categories.map(category => ({
+    ...category.toObject(),
+    icon: makeImageUrl(req, category.icon)
+  }));
+  res.json(categoriesWithAbsoluteIcon);
 });
 
+// CREATE category
 router.post('/', upload.single('icon'), async (req, res) => {
   const { name, description } = req.body;
   const icon = req.file ? `/uploads/categories/${req.file.filename}` : req.body.icon || "";
   const category = new Category({ name, description, icon });
   await category.save();
-  res.status(201).json(category);
+  const categoryWithAbsoluteIcon = {
+    ...category.toObject(),
+    icon: makeImageUrl(req, category.icon)
+  };
+  res.status(201).json(categoryWithAbsoluteIcon);
 });
 
+// UPDATE category
 router.put('/:id', upload.single('icon'), async (req, res) => {
   const { name, description } = req.body;
   let update = { name, description };
@@ -37,9 +56,15 @@ router.put('/:id', upload.single('icon'), async (req, res) => {
     update.icon = req.body.icon;
   }
   const category = await Category.findByIdAndUpdate(req.params.id, update, { new: true });
-  res.json(category);
+  if (!category) return res.status(404).json({ message: 'Category not found' });
+  const categoryWithAbsoluteIcon = {
+    ...category.toObject(),
+    icon: makeImageUrl(req, category.icon)
+  };
+  res.json(categoryWithAbsoluteIcon);
 });
 
+// DELETE category
 router.delete('/:id', async (req, res) => {
   await Category.findByIdAndDelete(req.params.id);
   res.status(204).send();
