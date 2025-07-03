@@ -1,5 +1,13 @@
 const Product = require('../models/Product');
 
+// Helper to make image URLs absolute
+function makeImageUrl(req, path) {
+  if (!path) return path;
+  if (path.startsWith('http')) return path;
+  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+}
+
 // Get all products (with filtering)
 exports.getAllProducts = async (req, res) => {
   try {
@@ -21,7 +29,21 @@ exports.getAllProducts = async (req, res) => {
     if (sort === 'price_desc') sortOption.price = -1;
 
     const products = await Product.find(query).sort(sortOption);
-    res.json(products);
+
+    // Convert images and thumbnail to absolute URLs
+    const productsWithAbsoluteImages = products.map(prod => ({
+      ...prod.toObject(),
+      images: Array.isArray(prod.images)
+        ? prod.images.map(img => makeImageUrl(req, img))
+        : [],
+      thumbnail: makeImageUrl(req, prod.thumbnail),
+    }));
+
+    res.json({
+      success: true,
+      count: products.length,
+      products: productsWithAbsoluteImages,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
