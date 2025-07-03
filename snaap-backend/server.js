@@ -13,10 +13,20 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const session = require('express-session');
 const path = require('path');
 
-// --- FIXED CORS SETUP ---
-// Place this BEFORE app.use(express.json()), etc.
+// --- UPDATED CORS SETUP ---
+// Allow both local and Vercel frontend in production
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://snaap-connections.vercel.app'
+];
+
 app.use(cors({
-  origin: 'http://localhost:3000',   // or your frontend URL in production
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 
