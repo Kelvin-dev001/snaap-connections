@@ -40,7 +40,9 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your-session-secret',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false }
+  cookie: { secure: true,
+    sameSite: 'none' 
+   }
 }));
 
 // MongoDB connection
