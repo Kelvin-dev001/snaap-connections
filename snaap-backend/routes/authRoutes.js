@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'Secure@123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'secure123';
 
 // Admin Login
 router.post('/login', (req, res) => {
