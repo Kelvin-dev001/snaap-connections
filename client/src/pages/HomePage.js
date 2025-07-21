@@ -17,7 +17,7 @@ const HomePage = () => {
   const [newArrivals, setNewArrivals] = useState([]);
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
-  const [reviews, setReviews] = useState([]);
+  const [recentReviews, setRecentReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -38,13 +38,13 @@ const HomePage = () => {
           API.getProducts({ sort: 'createdAt', limit: 8 }),
           API.getCategories(),
           API.getBrands(),
-          API.getProductReviews('all') // You may want to adjust this to fetch top/featured reviews
+          API.getRecentReviews() // Fetches recent approved reviews for homepage
         ]);
         setFeaturedProducts(featuredRes.data.products || []);
         setNewArrivals(newArrivalsRes.data.products || []);
         setCategories(categoriesRes.data.categories || []);
         setBrands(brandsRes.data.brands || []);
-        setReviews(reviewsRes.data.reviews || []);
+        setRecentReviews(reviewsRes.data.reviews || []);
       } catch (err) {
         setError('Failed to load homepage. Please try again.');
       } finally {
@@ -77,7 +77,8 @@ const HomePage = () => {
       <ShopByCategorySection categories={categories} />
       <FeaturedProductsSection products={featuredProducts} />
       <NewArrivalsSection products={newArrivals} />
-      <ReviewsSection reviews={reviews} />
+      {/* Pass recentReviews to ReviewsSection for homepage carousel */}
+      <ReviewsSection reviews={recentReviews} isHomepage />
       <WhyChooseUsSection />
       <WhatsAppCTASection />
     </Box>

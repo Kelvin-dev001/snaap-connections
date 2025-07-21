@@ -155,23 +155,25 @@ const ReviewForm = ({ open, handleClose, productId, onSubmitSuccess }) => {
 };
 
 // ===== Main Review Section =====
-const ReviewSection = ({ productId }) => {
-  const [reviews, setReviews] = useState([]);
+const ReviewSection = ({ productId, reviews: propReviews, isHomepage }) => {
+  const [reviews, setReviews] = useState(propReviews || []);
   const [filterStars, setFilterStars] = useState(0); // 0 = all
   const [sortOrder, setSortOrder] = useState("newest");
   const [showForm, setShowForm] = useState(false);
   const [refreshFlag, setRefreshFlag] = useState(false);
 
-  // Fetch approved reviews
+  // Fetch approved reviews only if not using homepage prop
   useEffect(() => {
-    if (!productId || productId === "all") {
-      setReviews([]);
+    if (propReviews && isHomepage) {
+      setReviews(propReviews);
       return;
     }
-    API.getProductReviews(productId)
-      .then((res) => setReviews(res.data.reviews || []))
-      .catch(() => setReviews([]));
-  }, [productId, refreshFlag]);
+    if (productId) {
+      API.getProductReviews(productId)
+        .then((res) => setReviews(res.data.reviews || []))
+        .catch(() => setReviews([]));
+    }
+  }, [productId, refreshFlag, propReviews, isHomepage]);
 
   // Filter and sort reviews
   const filtered = reviews
@@ -216,8 +218,8 @@ const ReviewSection = ({ productId }) => {
           <b>{reviews.length}</b> review{reviews.length !== 1 && "s"} &middot; Average Rating:{" "}
           <b>{avgRating}</b>/5
         </Typography>
-        {/* Only allow review submission if a valid productId is present */}
-        {productId && productId !== "all" && (
+        {/* Only allow review submission if a valid productId is present and not homepage */}
+        {productId && !isHomepage && (
           <Button
             variant="contained"
             color="primary"
@@ -259,7 +261,7 @@ const ReviewSection = ({ productId }) => {
         </Box>
       )}
       {/* Review form dialog */}
-      {productId && productId !== "all" && (
+      {productId && !isHomepage && (
         <ReviewForm
           open={showForm}
           handleClose={() => setShowForm(false)}

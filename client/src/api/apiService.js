@@ -103,6 +103,9 @@ const API = {
   // Submit a review for a product (open to all)
   submitProductReview: (productId, data) => api.post(`/products/${productId}/reviews`, data),
 
+  // Fetch recent approved reviews for homepage
+  getRecentReviews: () => api.get('/reviews/recent'),
+
   // ADMIN: Get all reviews (for moderation)
   getAllReviews: () => api.get('/admin/reviews'),
 
