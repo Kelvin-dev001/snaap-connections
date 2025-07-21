@@ -18,12 +18,37 @@ if (!apiBaseUrl) {
 // For debugging, shows which base URL is being used
 console.log("API base URL:", apiBaseUrl);
 
+// --- JWT TOKEN HANDLING ---
+// Store token in localStorage under 'jwtToken'
+export function setToken(token) {
+  localStorage.setItem('jwtToken', token);
+}
+
+export function getToken() {
+  return localStorage.getItem('jwtToken');
+}
+
+export function removeToken() {
+  localStorage.removeItem('jwtToken');
+}
+
 // Configure axios instance
 const api = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 10000,
-  withCredentials: true // Important for session/cookie auth!
+  timeout: 10000
 });
+
+// Attach JWT token to every request if present
+api.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 const API = {
   // Product endpoints
@@ -88,15 +113,25 @@ const API = {
   deleteReview: (reviewId) => api.delete(`/admin/reviews/${reviewId}`),
 
   // =======================
- // Auth/Sessions
-// =======================
-// Log in as admin (password only) -- updated endpoint!
-login: ({ password }) => api.post('/auth/login', { password }, { withCredentials: true }),
-// Log out admin
-logout: () => api.post('/admin/logout', {}, { withCredentials: true }),
-// Check admin session
-checkAdmin: () => api.get('/admin/check', { withCredentials: true }),
-
+  // Auth/JWT
+  // =======================
+  // Log in as admin (password only) -- now expects and stores a token!
+  login: async ({ password }) => {
+    const response = await api.post('/auth/login', { password });
+    if (response.data && response.data.token) {
+      setToken(response.data.token);
+    }
+    return response;
+  },
+  // Log out admin (just remove the token client-side)
+  logout: () => {
+    removeToken();
+    // Optionally, you can call the backend logout endpoint if needed:
+    // return api.post('/auth/logout');
+    return Promise.resolve();
+  },
+  // Check admin JWT
+  checkAdmin: () => api.get('/auth/check'),
 };
 
 export default API;

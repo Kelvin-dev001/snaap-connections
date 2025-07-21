@@ -4,6 +4,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import API from '../../api/apiService'; // Adjust the path as needed
+import { setToken } from '../../api/apiService';
 
 const AdminLogin = () => {
   const [password, setPassword] = useState('');
@@ -16,7 +17,12 @@ const AdminLogin = () => {
     setError('');
     setLoading(true);
     try {
-      await API.login({ password });
+      // Call login, which returns { token } on success
+      const response = await API.login({ password });
+      // If your API.login doesn't already set the token, do it here:
+      if (response.data && response.data.token) {
+        setToken(response.data.token);
+      }
       navigate('/admin', { replace: true });
     } catch (err) {
       setError(

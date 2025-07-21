@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/apiService"; // adjust path if needed
+import { getToken } from "../api/apiService"; // import token getter
 
 export default function RequireAdmin({ children }) {
   const [checking, setChecking] = useState(true);
@@ -10,8 +11,17 @@ export default function RequireAdmin({ children }) {
   useEffect(() => {
     let cancelled = false;
     async function checkAdmin() {
+      // If no token, don't bother calling backend
+      const token = getToken();
+      if (!token) {
+        if (!cancelled) {
+          setIsAdmin(false);
+          setChecking(false);
+          navigate("/admin/login", { replace: true });
+        }
+        return;
+      }
       try {
-        // You can use API method or fetch directly
         // The endpoint must return {isAdmin: true/false}
         const { data } = await API.checkAdmin();
         if (!cancelled) {
