@@ -3,6 +3,7 @@ const router = express.Router();
 const { upload, processUpload } = require('../middleware/upload');
 const Product = require('../models/Product');
 const multer = require('multer');
+const requireAdmin = require('../middleware/requireAdmin');
 const updatedUpload = upload.array('images', 10);
 
 // Helper function to generate SKU
@@ -147,6 +148,9 @@ router.get('/:id', async (req, res) => {
     });
   }
 });
+
+// --- PROTECTED ROUTES: requireAdmin ---
+router.use(requireAdmin);
 
 // --- PRODUCT CREATE ---
 router.post('/', updatedUpload, (req, res, next) => {

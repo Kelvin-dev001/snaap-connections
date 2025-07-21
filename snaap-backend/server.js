@@ -10,7 +10,6 @@ const orderRoutes = require('./routes/orderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const brandRoutes = require('./routes/brandRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
-const session = require('express-session');
 const path = require('path');
 
 // --- UPDATED CORS SETUP ---
@@ -30,15 +29,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Sessions (place before routes if needed for auth)
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-session-secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: true,
-    sameSite: 'none' 
-   }
-}));
+// --- REMOVED SESSION/COOKIE MIDDLEWARE ---
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI)

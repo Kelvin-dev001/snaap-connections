@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
+const requireAdmin = require('../middleware/requireAdmin');
 
 // Helper function for pagination, sorting, and population
 const applyPaginationAndSorting = async (query, req) => {
@@ -68,8 +69,8 @@ const applyPaginationAndSorting = async (query, req) => {
   }
 };
 
-// GET all orders with pagination, sorting, and product population
-router.get('/', async (req, res, next) => {
+// GET all orders with pagination, sorting, and product population (ADMIN ONLY)
+router.get('/', requireAdmin, async (req, res, next) => {
   try {
     const result = await applyPaginationAndSorting({}, req);
     res.status(200).json(result);
@@ -96,7 +97,7 @@ const validateOrder = (req) => {
   return errors;
 };
 
-// POST: Submit a new order
+// POST: Submit a new order (PUBLIC)
 router.post('/', async (req, res, next) => {
   try {
     // Validate the order
@@ -137,8 +138,8 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// DELETE: Remove an order by ID
-router.delete('/:id', async (req, res, next) => {
+// DELETE: Remove an order by ID (ADMIN ONLY)
+router.delete('/:id', requireAdmin, async (req, res, next) => {
   try {
     const order = await Order.findByIdAndDelete(req.params.id);
 
@@ -158,8 +159,8 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
-// GET: Retrieve a single order by ID
-router.get('/:id', async (req, res, next) => {
+// GET: Retrieve a single order by ID (ADMIN ONLY)
+router.get('/:id', requireAdmin, async (req, res, next) => {
   try {
     const order = await Order.findById(req.params.id).populate({
       path: 'products.product',
@@ -182,8 +183,8 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// PATCH: Update the status of an order
-router.patch('/:id', async (req, res, next) => {
+// PATCH: Update the status of an order (ADMIN ONLY)
+router.patch('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { status } = req.body;
 

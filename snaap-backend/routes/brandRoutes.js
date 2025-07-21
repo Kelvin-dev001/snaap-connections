@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const Brand = require('../models/brand');
+const requireAdmin = require('../middleware/requireAdmin');
 
 // Multer setup for logo uploads
 const storage = multer.diskStorage({
@@ -23,7 +24,7 @@ function makeImageUrl(req, path) {
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
-// GET all brands (logo as absolute URL)
+// GET all brands (logo as absolute URL) - PUBLIC
 router.get('/', async (req, res) => {
   const brands = await Brand.find();
   const brandsWithAbsoluteLogo = brands.map(brand => ({
@@ -32,6 +33,9 @@ router.get('/', async (req, res) => {
   }));
   res.json(brandsWithAbsoluteLogo);
 });
+
+// All routes below require admin authentication
+router.use(requireAdmin);
 
 // CREATE brand
 router.post('/', upload.single('logo'), async (req, res) => {

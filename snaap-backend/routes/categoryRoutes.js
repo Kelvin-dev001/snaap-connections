@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const Category = require('../models/category');
+const requireAdmin = require('../middleware/requireAdmin');
 
 // Multer setup for icon uploads
 const storage = multer.diskStorage({
@@ -23,7 +24,7 @@ function makeImageUrl(req, path) {
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
-// GET all categories (icon as absolute URL)
+// GET all categories (icon as absolute URL) - PUBLIC
 router.get('/', async (req, res) => {
   const categories = await Category.find();
   const categoriesWithAbsoluteIcon = categories.map(category => ({
@@ -32,6 +33,9 @@ router.get('/', async (req, res) => {
   }));
   res.json(categoriesWithAbsoluteIcon);
 });
+
+// All routes below this require admin authentication
+router.use(requireAdmin);
 
 // CREATE category
 router.post('/', upload.single('icon'), async (req, res) => {

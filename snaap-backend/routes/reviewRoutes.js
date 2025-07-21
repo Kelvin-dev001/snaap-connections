@@ -6,7 +6,7 @@ const {
   approveReview,
   deleteReview
 } = require('../controllers/reviewController');
-const { adminProtect } = require('../middleware/auth');
+const requireAdmin = require('../middleware/requireAdmin');
 
 const router = express.Router();
 
@@ -17,12 +17,12 @@ router.get('/products/:id/reviews', getProductReviews);
 router.post('/products/:id/reviews', addProductReview);
 
 // Admin: Get all reviews (moderation dashboard)
-router.get('/admin/reviews', adminProtect, getAllReviewsForAdmin);
+router.get('/admin/reviews', requireAdmin, getAllReviewsForAdmin);
 
 // Admin: Approve review
-router.patch('/admin/reviews/:reviewId/approve', adminProtect, approveReview);
+router.patch('/admin/reviews/:reviewId/approve', requireAdmin, approveReview);
 
 // Admin: Delete review
-router.delete('/admin/reviews/:reviewId', adminProtect, deleteReview);
+router.delete('/admin/reviews/:reviewId', requireAdmin, deleteReview);
 
 module.exports = router;

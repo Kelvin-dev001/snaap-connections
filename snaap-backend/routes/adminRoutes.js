@@ -3,7 +3,7 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const User = require('../models/User');
-const requireAdmin = require('../middleware/adminAuth');
+const requireAdmin = require('../middleware/requireAdmin');
 
 // PUBLIC: GET /api/admin/customers (no auth)
 router.get('/customers', async (req, res) => {
@@ -32,10 +32,10 @@ router.get('/customers', async (req, res) => {
   }
 });
 
-// All routes below this line require admin authentication
+// PROTECTED ROUTES: require admin authentication for all routes below
 router.use(requireAdmin);
 
-// GET /api/admin/dashboard
+// GET /api/admin/dashboard (protected)
 router.get('/dashboard', async (req, res) => {
   try {
     // 1. Total Revenue and Orders (from completed orders)
