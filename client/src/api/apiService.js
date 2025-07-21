@@ -91,7 +91,7 @@ const API = {
  // Auth/Sessions
 // =======================
 // Log in as admin (password only) -- updated endpoint!
-login: ({ password }) => api.post('/admin/login', { password }, { withCredentials: true }),
+login: ({ password }) => api.post('/auth/login', { password }, { withCredentials: true }),
 // Log out admin
 logout: () => api.post('/admin/logout', {}, { withCredentials: true }),
 // Check admin session
