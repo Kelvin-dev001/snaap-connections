@@ -12,7 +12,10 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
   }
   req.session.isAdmin = true;
-  res.json({ success: true });
+  // Ensure session is saved and 'Set-Cookie' is sent before sending response
+  req.session.save(() => {
+    res.json({ success: true });
+  });
 });
 
 // Admin Logout
