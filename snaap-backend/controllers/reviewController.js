@@ -5,18 +5,12 @@ const Review = require('../models/review');
 exports.getProductReviews = async (req, res) => {
   try {
     const productId = req.params.id;
-    let reviews;
-    if (productId === 'all') {
-      // Fetch all product reviews (approved only)
-      reviews = await Review.find({ isApproved: true }).sort('-createdAt');
-    } else {
-      // Validate productId
-      if (!mongoose.Types.ObjectId.isValid(productId)) {
-        return res.status(400).json({ message: 'Invalid product ID.' });
-      }
-      // Fetch reviews for a specific product (approved only)
-      reviews = await Review.find({ product: productId, isApproved: true }).sort('-createdAt');
+    // Validate productId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: 'Invalid product ID.' });
     }
+    // Fetch reviews for a specific product (approved only)
+    const reviews = await Review.find({ product: productId, isApproved: true }).sort('-createdAt');
     res.json({ reviews });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch reviews', error: error.message });
