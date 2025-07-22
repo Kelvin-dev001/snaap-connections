@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { upload, processUpload } = require('../middleware/upload');
+const { upload } = require('../middleware/upload');
 const Product = require('../models/Product');
-const multer = require('multer');
 const requireAdmin = require('../middleware/requireAdmin');
 const updatedUpload = upload.array('images', 10);
 
@@ -31,8 +30,30 @@ function getExistingImages(req) {
 // Helper: extract image URLs from multer files
 function getImageUrls(files) {
   if (!files || files.length === 0) return [];
-  // Support both .url (if set by processUpload), or path fallback
   return files.map(file => file.url || `/uploads/${file.filename}`);
+}
+
+// Helper to extract specs from flat, nested, or FormData style
+function extractSpecs(body) {
+  const specs = {};
+  [
+    'storage', 'ram', 'screenSize', 'camera', 'battery',
+    'processor', 'os', 'material', 'wattage', 'connectivity', 'color'
+  ].forEach(key => {
+    if (body[key]) specs[key] = body[key];
+    if (body[`specs[${key}]`]) specs[key] = body[`specs[${key}]`];
+    if (body.specs && body.specs[key]) specs[key] = body.specs[key];
+  });
+  return specs;
+}
+
+// Helper to extract array fields from FormData or JSON
+function extractArray(field, body) {
+  if (Array.isArray(body[`${field}[]`])) return body[`${field}[]`];
+  if (body[`${field}[]`]) return [body[`${field}[]`]];
+  if (Array.isArray(body[field])) return body[field];
+  if (typeof body[field] === 'string' && body[field].length > 0) return body[field].split(',').map(s => s.trim());
+  return [];
 }
 
 // GET ALL PRODUCTS (client)
@@ -54,7 +75,6 @@ router.get('/', async (req, res) => {
       .limit(parseInt(limit) || 20)
       .sort({ createdAt: -1 });
 
-    // Map images/thumbnails to absolute URLs
     const productsWithAbsoluteImages = products.map(prod => ({
       ...prod.toObject(),
       images: Array.isArray(prod.images)
@@ -126,7 +146,6 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // Map images/thumbnails to absolute URLs for single product
     const productWithAbsoluteImages = {
       ...product.toObject(),
       images: Array.isArray(product.images)
@@ -154,7 +173,6 @@ router.use(requireAdmin);
 
 // --- PRODUCT CREATE ---
 router.post('/', updatedUpload, (req, res, next) => {
-  // Attach .url to each file for consistency
   if (req.files && Array.isArray(req.files)) {
     req.files.forEach(file => {
       file.url = `/uploads/${file.filename}`;
@@ -166,7 +184,6 @@ router.post('/', updatedUpload, (req, res, next) => {
   try {
     const { name, price, brand, category } = req.body;
     
-    // Validate required fields
     if (!name || !price || !brand || !category) {
       return res.status(400).json({
         success: false,
@@ -188,33 +205,33 @@ router.post('/', updatedUpload, (req, res, next) => {
       category,
       shortDescription: req.body.shortDescription || '',
       fullDescription: req.body.fullDescription || '',
-      specs: {
-        storage: req.body.storage,
-        ram: req.body.ram,
-        screenSize: req.body.screenSize,
-        camera: req.body.camera,
-        battery: req.body.battery,
-        processor: req.body.processor,
-        os: req.body.os,
-        material: req.body.material,
-        wattage: req.body.wattage,
-        connectivity: req.body.connectivity,
-        color: req.body.color,
-      },
+      keyFeatures: extractArray('keyFeatures', req.body),
+      tags: extractArray('tags', req.body),
+      compatibleWith: extractArray('compatibleWith', req.body),
+      relatedProducts: extractArray('relatedProducts', req.body),
+      accessoryType: req.body.accessoryType || '',
+      model: req.body.model || '',
+      videoUrl: req.body.videoUrl || '',
+      currency: req.body.currency || 'KES',
+      discountPrice: req.body.discountPrice ? Number(req.body.discountPrice) : undefined,
+      specs: extractSpecs(req.body),
       sku: req.body.sku || generateSKU(name, brand),
       stockQuantity: Number(req.body.stockQuantity) || Number(req.body.stock) || 0,
       inStock: req.body.inStock !== 'false',
       images,
       thumbnail: images[0] || null,
       isFeatured: req.body.isFeatured === 'true' || req.body.isActive === 'true' || false,
-      warrantyPeriod: req.body.warrantyPeriod || '1 year'
+      isNewRelease: req.body.isNewRelease === 'true' || false,
+      releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : undefined,
+      warrantyPeriod: req.body.warrantyPeriod || '1 year',
+      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30,
+      tags: extractArray('tags', req.body)
     };
 
     // Save product
     const product = new Product(productData);
     const savedProduct = await product.save();
 
-    // Map images to absolute URL for response
     const responseProduct = {
       ...savedProduct.toObject(),
       images: Array.isArray(savedProduct.images)
@@ -230,7 +247,6 @@ router.post('/', updatedUpload, (req, res, next) => {
   } catch (err) {
     console.error('Error creating product:', err);
 
-    // Handle duplicate SKU
     if (err.code === 11000 && err.keyPattern && err.keyPattern.sku) {
       return res.status(400).json({
         success: false,
@@ -239,7 +255,6 @@ router.post('/', updatedUpload, (req, res, next) => {
       });
     }
 
-    // Handle validation errors
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(e => e.message);
       return res.status(400).json({
@@ -270,7 +285,6 @@ router.put('/:id', updatedUpload, (req, res, next) => {
   try {
     const { name, price, brand, category } = req.body;
 
-    // Validate required fields
     if (!name || !price || !brand || !category) {
       return res.status(400).json({
         success: false,
@@ -279,7 +293,6 @@ router.put('/:id', updatedUpload, (req, res, next) => {
       });
     }
 
-    // Get existing product
     const existingProduct = await Product.findById(req.params.id);
     if (!existingProduct) {
       return res.status(404).json({
@@ -294,7 +307,6 @@ router.put('/:id', updatedUpload, (req, res, next) => {
     const newImages = getImageUrls(req.files);
     const images = [...existingImages, ...newImages];
 
-    // Build update data
     const updateData = {
       name,
       price: Number(price),
@@ -302,36 +314,35 @@ router.put('/:id', updatedUpload, (req, res, next) => {
       category,
       shortDescription: req.body.shortDescription || existingProduct.shortDescription,
       fullDescription: req.body.fullDescription || existingProduct.fullDescription,
-      specs: {
-        storage: req.body.storage || existingProduct.specs.storage,
-        ram: req.body.ram || existingProduct.specs.ram,
-        screenSize: req.body.screenSize || existingProduct.specs.screenSize,
-        camera: req.body.camera || existingProduct.specs.camera,
-        battery: req.body.battery || existingProduct.specs.battery,
-        processor: req.body.processor || existingProduct.specs.processor,
-        os: req.body.os || existingProduct.specs.os,
-        material: req.body.material || existingProduct.specs.material,
-        wattage: req.body.wattage || existingProduct.specs.wattage,
-        connectivity: req.body.connectivity || existingProduct.specs.connectivity,
-        color: req.body.color || existingProduct.specs.color,
-      },
+      keyFeatures: extractArray('keyFeatures', req.body).length > 0 ? extractArray('keyFeatures', req.body) : existingProduct.keyFeatures,
+      tags: extractArray('tags', req.body).length > 0 ? extractArray('tags', req.body) : existingProduct.tags,
+      compatibleWith: extractArray('compatibleWith', req.body).length > 0 ? extractArray('compatibleWith', req.body) : existingProduct.compatibleWith,
+      relatedProducts: extractArray('relatedProducts', req.body).length > 0 ? extractArray('relatedProducts', req.body) : existingProduct.relatedProducts,
+      accessoryType: req.body.accessoryType || existingProduct.accessoryType,
+      model: req.body.model || existingProduct.model,
+      videoUrl: req.body.videoUrl || existingProduct.videoUrl,
+      currency: req.body.currency || existingProduct.currency,
+      discountPrice: req.body.discountPrice ? Number(req.body.discountPrice) : existingProduct.discountPrice,
+      specs: Object.keys(extractSpecs(req.body)).length > 0 ? extractSpecs(req.body) : existingProduct.specs,
       sku: req.body.sku || existingProduct.sku,
       stockQuantity: Number(req.body.stockQuantity) || Number(req.body.stock) || existingProduct.stockQuantity,
       inStock: typeof req.body.inStock !== 'undefined' ? req.body.inStock !== 'false' : existingProduct.inStock,
       images,
       thumbnail: images[0] || existingProduct.thumbnail,
       isFeatured: req.body.isFeatured === 'true' || req.body.isActive === 'true' || existingProduct.isFeatured,
-      warrantyPeriod: req.body.warrantyPeriod || existingProduct.warrantyPeriod
+      isNewRelease: req.body.isNewRelease === 'true' || existingProduct.isNewRelease,
+      releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
+      warrantyPeriod: req.body.warrantyPeriod || existingProduct.warrantyPeriod,
+      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays,
+      tags: extractArray('tags', req.body).length > 0 ? extractArray('tags', req.body) : existingProduct.tags
     };
 
-    // Update product
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
       updateData,
       { new: true, runValidators: true }
     );
 
-    // Map images to absolute URL for response
     const responseProduct = {
       ...updatedProduct.toObject(),
       images: Array.isArray(updatedProduct.images)
