@@ -224,8 +224,7 @@ router.post('/', updatedUpload, (req, res, next) => {
       isNewRelease: req.body.isNewRelease === 'true' || false,
       releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : undefined,
       warrantyPeriod: req.body.warrantyPeriod || '1 year',
-      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30,
-      tags: extractArray('tags', req.body)
+      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30
     };
 
     // Save product
@@ -312,29 +311,28 @@ router.put('/:id', updatedUpload, (req, res, next) => {
       price: Number(price),
       brand,
       category,
-      shortDescription: req.body.shortDescription || existingProduct.shortDescription,
-      fullDescription: req.body.fullDescription || existingProduct.fullDescription,
+      shortDescription: typeof req.body.shortDescription !== 'undefined' ? req.body.shortDescription : existingProduct.shortDescription,
+      fullDescription: typeof req.body.fullDescription !== 'undefined' ? req.body.fullDescription : existingProduct.fullDescription,
       keyFeatures: extractArray('keyFeatures', req.body).length > 0 ? extractArray('keyFeatures', req.body) : existingProduct.keyFeatures,
       tags: extractArray('tags', req.body).length > 0 ? extractArray('tags', req.body) : existingProduct.tags,
       compatibleWith: extractArray('compatibleWith', req.body).length > 0 ? extractArray('compatibleWith', req.body) : existingProduct.compatibleWith,
       relatedProducts: extractArray('relatedProducts', req.body).length > 0 ? extractArray('relatedProducts', req.body) : existingProduct.relatedProducts,
-      accessoryType: req.body.accessoryType || existingProduct.accessoryType,
-      model: req.body.model || existingProduct.model,
-      videoUrl: req.body.videoUrl || existingProduct.videoUrl,
-      currency: req.body.currency || existingProduct.currency,
-      discountPrice: req.body.discountPrice ? Number(req.body.discountPrice) : existingProduct.discountPrice,
+      accessoryType: typeof req.body.accessoryType !== 'undefined' ? req.body.accessoryType : existingProduct.accessoryType,
+      model: typeof req.body.model !== 'undefined' ? req.body.model : existingProduct.model,
+      videoUrl: typeof req.body.videoUrl !== 'undefined' ? req.body.videoUrl : existingProduct.videoUrl,
+      currency: typeof req.body.currency !== 'undefined' ? req.body.currency : existingProduct.currency,
+      discountPrice: typeof req.body.discountPrice !== 'undefined' ? Number(req.body.discountPrice) : existingProduct.discountPrice,
       specs: Object.keys(extractSpecs(req.body)).length > 0 ? extractSpecs(req.body) : existingProduct.specs,
-      sku: req.body.sku || existingProduct.sku,
-      stockQuantity: Number(req.body.stockQuantity) || Number(req.body.stock) || existingProduct.stockQuantity,
+      sku: typeof req.body.sku !== 'undefined' ? req.body.sku : existingProduct.sku,
+      stockQuantity: typeof req.body.stockQuantity !== 'undefined' ? Number(req.body.stockQuantity) : typeof req.body.stock !== 'undefined' ? Number(req.body.stock) : existingProduct.stockQuantity,
       inStock: typeof req.body.inStock !== 'undefined' ? req.body.inStock !== 'false' : existingProduct.inStock,
       images,
       thumbnail: images[0] || existingProduct.thumbnail,
-      isFeatured: req.body.isFeatured === 'true' || req.body.isActive === 'true' || existingProduct.isFeatured,
-      isNewRelease: req.body.isNewRelease === 'true' || existingProduct.isNewRelease,
-      releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
-      warrantyPeriod: req.body.warrantyPeriod || existingProduct.warrantyPeriod,
-      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays,
-      tags: extractArray('tags', req.body).length > 0 ? extractArray('tags', req.body) : existingProduct.tags
+      isFeatured: typeof req.body.isFeatured !== 'undefined' ? (req.body.isFeatured === 'true' || req.body.isActive === 'true') : existingProduct.isFeatured,
+      isNewRelease: typeof req.body.isNewRelease !== 'undefined' ? req.body.isNewRelease === 'true' : existingProduct.isNewRelease,
+      releaseDate: typeof req.body.releaseDate !== 'undefined' && req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
+      warrantyPeriod: typeof req.body.warrantyPeriod !== 'undefined' ? req.body.warrantyPeriod : existingProduct.warrantyPeriod,
+      returnPolicyDays: typeof req.body.returnPolicyDays !== 'undefined' ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays
     };
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -357,11 +355,14 @@ router.put('/:id', updatedUpload, (req, res, next) => {
     });
   } catch (err) {
     console.error('Error updating product:', err);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Failed to update product'
-    });
+    // Do not send a second response if headers already sent
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        error: 'SERVER_ERROR',
+        message: 'Failed to update product'
+      });
+    }
   }
 });
 
