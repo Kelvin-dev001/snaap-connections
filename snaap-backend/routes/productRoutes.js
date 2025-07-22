@@ -10,11 +10,15 @@ const generateSKU = (name, brand) => {
   return `${brand.slice(0, 3).toUpperCase()}-${name.slice(0, 3).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
 };
 
-// Helper for Absolute URLs
+// Helper for Absolute URLs - always use HTTPS
 function makeImageUrl(req, path) {
   if (!path) return path;
   if (path.startsWith('http')) return path;
-  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+  let baseUrl = process.env.BASE_URL;
+  if (!baseUrl) {
+    // Force HTTPS for frontend image URLs
+    baseUrl = `https://${req.get('host')}`;
+  }
   return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 }
 
