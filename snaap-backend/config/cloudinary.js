@@ -1,10 +1,8 @@
 const cloudinary = require('cloudinary').v2;
 
+// Use built-in config. The SDK will automatically read CLOUDINARY_URL from process.env.
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_URL.split('@')[1],
-  api_key: process.env.CLOUDINARY_URL.split('//')[1].split(':')[0],
-  api_secret: process.env.CLOUDINARY_URL.split(':')[2].split('@')[0],
   secure: true
 });
 
-module.exports = cloudinary;
+module.exports = cloudinary;const cloudinary = require('cloudinary').v2;
