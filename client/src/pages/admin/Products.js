@@ -6,8 +6,9 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Select, MenuItem, FormControl, InputLabel,
   Chip, useTheme, useMediaQuery, CircularProgress,  FormControlLabel,
-  Checkbox, Tooltip, TablePagination
+  Checkbox, Tooltip, TablePagination, Snackbar
 } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 import {
   Add, Edit, Delete, Search, Clear,
   Visibility, Category, Inventory
@@ -37,6 +38,10 @@ const Products = () => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [initialPreviews, setInitialPreviews] = useState([]); // For edit: show already uploaded images
 
+  // Success Snackbar
+  const [successMsg, setSuccessMsg] = useState('');
+  const handleSuccessClose = () => setSuccessMsg('');
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -51,7 +56,6 @@ const Products = () => {
           API.getBrands()
         ]);
 
-        // Support both array and {data: array} API styles
         setProducts(productsRes.data.products || productsRes.data || []);
         setTotalProducts(productsRes.data.count || productsRes.data?.length || 0);
         setCategories(categoriesRes.data.categories || categoriesRes.data || []);
@@ -254,7 +258,6 @@ const Products = () => {
   };
 
   const handleSaveProduct = async () => {
-    console.log('currentProduct before save:', currentProduct);
     if (!currentProduct.name || !currentProduct.price || !currentProduct.brand || !currentProduct.category) {
       setError("Please fill in all required fields (name, price, brand, category).");
       return;
@@ -263,9 +266,11 @@ const Products = () => {
       setLoading(true);
       const formData = collectFormData();
       if (currentProduct._id) {
-        await API.updateProduct(currentProduct._id, formData); // No headers here!
+        await API.updateProduct(currentProduct._id, formData);
+        setSuccessMsg('Product updated successfully!');
       } else {
-        await API.createProduct(formData); // No headers here!
+        await API.createProduct(formData);
+        setSuccessMsg('Product created successfully!');
       }
       // Refresh products list
       const res = await API.getProducts({ 
@@ -333,6 +338,18 @@ const Products = () => {
 
   return (
     <Box sx={{ p: isMobile ? 2 : 3 }}>
+      {/* Success Snackbar */}
+      <Snackbar
+        open={!!successMsg}
+        autoHideDuration={3000}
+        onClose={handleSuccessClose}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <MuiAlert onClose={handleSuccessClose} severity="success" sx={{ width: '100%' }}>
+          {successMsg}
+        </MuiAlert>
+      </Snackbar>
+
       <Box sx={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
@@ -377,7 +394,6 @@ const Products = () => {
                 )
               }}
             />
-            {/* You can add a category filter here later if desired */}
           </Box>
         </CardContent>
       </Card>
@@ -412,9 +428,12 @@ const Products = () => {
                           borderRadius: 1,
                           overflow: 'hidden',
                           mr: 2,
-                          bgcolor: 'grey.200'
+                          bgcolor: 'grey.200',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}>
-                          {product.images?.[0] && (
+                          {product.images?.[0] ? (
                             <img 
                               src={product.images[0]} 
                               alt={product.name}
@@ -424,6 +443,8 @@ const Products = () => {
                                 objectFit: 'cover'
                               }}
                             />
+                          ) : (
+                            <Inventory color="disabled" fontSize="small" />
                           )}
                         </Box>
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
