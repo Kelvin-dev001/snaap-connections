@@ -3,23 +3,27 @@ const router = express.Router();
 const { upload } = require('../middleware/upload');
 const Product = require('../models/Product');
 const requireAdmin = require('../middleware/requireAdmin');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
+
 const updatedUpload = upload.array('images', 10);
 
-// Helper function to generate SKU
-const generateSKU = (name, brand) => {
-  return `${brand.slice(0, 3).toUpperCase()}-${name.slice(0, 3).toUpperCase()}-${Math.floor(Math.random() * 1000)}`;
-};
-
-// Helper for Absolute URLs - always use HTTPS
-function makeImageUrl(req, path) {
-  if (!path) return path;
-  if (path.startsWith('http')) return path;
-  let baseUrl = process.env.BASE_URL;
-  if (!baseUrl) {
-    // Force HTTPS for frontend image URLs
-    baseUrl = `https://${req.get('host')}`;
-  }
-  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+// Helper: upload a buffer to Cloudinary
+async function uploadBufferToCloudinary(buffer, filename) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'products',
+        public_id: filename.split('.')[0],
+        resource_type: 'image'
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
 }
 
 // Helper: handle existingImages from FormData (array or CSV)
@@ -29,12 +33,6 @@ function getExistingImages(req) {
   if (typeof req.body.existingImages === 'string' && req.body.existingImages.length > 0)
     return req.body.existingImages.split(',');
   return [];
-}
-
-// Helper: extract image URLs from multer files
-function getImageUrls(files) {
-  if (!files || files.length === 0) return [];
-  return files.map(file => file.url || `/uploads/${file.filename}`);
 }
 
 // Helper to extract specs from flat, nested, or FormData style
@@ -79,12 +77,11 @@ router.get('/', async (req, res) => {
       .limit(parseInt(limit) || 20)
       .sort({ createdAt: -1 });
 
+    // Images are now Cloudinary URLs, so no need to transform
     const productsWithAbsoluteImages = products.map(prod => ({
-      ...prod.toObject(),
-      images: Array.isArray(prod.images)
-        ? prod.images.map(img => makeImageUrl(req, img))
-        : [],
-      thumbnail: makeImageUrl(req, prod.thumbnail),
+      ...prod.toObject()
+      // images: prod.images,
+      // thumbnail: prod.thumbnail
     }));
 
     res.json({ 
@@ -149,18 +146,9 @@ router.get('/:id', async (req, res) => {
         message: 'Product not found'
       });
     }
-
-    const productWithAbsoluteImages = {
-      ...product.toObject(),
-      images: Array.isArray(product.images)
-        ? product.images.map(img => makeImageUrl(req, img))
-        : [],
-      thumbnail: makeImageUrl(req, product.thumbnail),
-    };
-
     res.json({ 
       success: true, 
-      product: productWithAbsoluteImages
+      product: product.toObject()
     });
   } catch (err) {
     console.error('Error fetching product:', err);
@@ -176,15 +164,7 @@ router.get('/:id', async (req, res) => {
 router.use(requireAdmin);
 
 // --- PRODUCT CREATE ---
-router.post('/', updatedUpload, (req, res, next) => {
-  if (req.files && Array.isArray(req.files)) {
-    req.files.forEach(file => {
-      file.url = `/uploads/${file.filename}`;
-      file.localPath = file.path;
-    });
-  }
-  next();
-}, async (req, res) => {
+router.post('/', updatedUpload, async (req, res) => {
   try {
     const { name, price, brand, category } = req.body;
     
@@ -196,10 +176,17 @@ router.post('/', updatedUpload, (req, res, next) => {
       });
     }
 
-    // Handle images
+    // Handle images: upload to Cloudinary
     const existingImages = getExistingImages(req);
-    const newImages = getImageUrls(req.files);
-    const images = [...existingImages, ...newImages];
+    let cloudinaryImages = [];
+    if (req.files && req.files.length > 0) {
+      cloudinaryImages = await Promise.all(
+        req.files.map(file =>
+          uploadBufferToCloudinary(file.buffer, file.originalname)
+        )
+      );
+    }
+    const images = [...existingImages, ...cloudinaryImages];
 
     // Build product data
     const productData = {
@@ -235,17 +222,9 @@ router.post('/', updatedUpload, (req, res, next) => {
     const product = new Product(productData);
     const savedProduct = await product.save();
 
-    const responseProduct = {
-      ...savedProduct.toObject(),
-      images: Array.isArray(savedProduct.images)
-        ? savedProduct.images.map(img => makeImageUrl(req, img))
-        : [],
-      thumbnail: makeImageUrl(req, savedProduct.thumbnail),
-    };
-
     res.status(201).json({
       success: true,
-      product: responseProduct
+      product: savedProduct.toObject()
     });
   } catch (err) {
     console.error('Error creating product:', err);
@@ -276,15 +255,7 @@ router.post('/', updatedUpload, (req, res, next) => {
 });
 
 // --- PRODUCT UPDATE ---
-router.put('/:id', updatedUpload, (req, res, next) => {
-  if (req.files && Array.isArray(req.files)) {
-    req.files.forEach(file => {
-      file.url = `/uploads/${file.filename}`;
-      file.localPath = file.path;
-    });
-  }
-  next();
-}, async (req, res) => {
+router.put('/:id', updatedUpload, async (req, res) => {
   try {
     const { name, price, brand, category } = req.body;
 
@@ -305,10 +276,17 @@ router.put('/:id', updatedUpload, (req, res, next) => {
       });
     }
 
-    // Handle images - combine existing and new
+    // Handle images: merge existing and new Cloudinary uploads
     const existingImages = getExistingImages(req);
-    const newImages = getImageUrls(req.files);
-    const images = [...existingImages, ...newImages];
+    let cloudinaryImages = [];
+    if (req.files && req.files.length > 0) {
+      cloudinaryImages = await Promise.all(
+        req.files.map(file =>
+          uploadBufferToCloudinary(file.buffer, file.originalname)
+        )
+      );
+    }
+    const images = [...existingImages, ...cloudinaryImages];
 
     const updateData = {
       name,
@@ -345,21 +323,12 @@ router.put('/:id', updatedUpload, (req, res, next) => {
       { new: true, runValidators: true }
     );
 
-    const responseProduct = {
-      ...updatedProduct.toObject(),
-      images: Array.isArray(updatedProduct.images)
-        ? updatedProduct.images.map(img => makeImageUrl(req, img))
-        : [],
-      thumbnail: makeImageUrl(req, updatedProduct.thumbnail),
-    };
-
     res.json({
       success: true,
-      product: responseProduct
+      product: updatedProduct.toObject()
     });
   } catch (err) {
     console.error('Error updating product:', err);
-    // Do not send a second response if headers already sent
     if (!res.headersSent) {
       res.status(500).json({
         success: false,
