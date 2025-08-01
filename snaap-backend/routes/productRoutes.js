@@ -8,6 +8,14 @@ const streamifier = require('streamifier');
 
 const updatedUpload = upload.array('images', 10);
 
+// SKU generator function (fixes ReferenceError)
+function generateSKU(name, brand) {
+  // Simple SKU: first 3 letters of brand and name, timestamp
+  const brandPart = brand ? brand.substring(0, 3).toUpperCase() : 'XXX';
+  const namePart = name ? name.substring(0, 3).toUpperCase() : 'YYY';
+  return `${brandPart}-${namePart}-${Date.now()}`;
+}
+
 // Helper: upload a buffer to Cloudinary
 async function uploadBufferToCloudinary(buffer, filename) {
   return new Promise((resolve, reject) => {
