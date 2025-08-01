@@ -5,4 +5,4 @@ cloudinary.config({
   secure: true
 });
 
-module.exports = cloudinary;const cloudinary = require('cloudinary').v2;
+module.exports = cloudinary;
