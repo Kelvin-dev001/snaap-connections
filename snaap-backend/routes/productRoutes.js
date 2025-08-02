@@ -7,7 +7,6 @@ const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 
 const updatedUpload = upload.array('images', 10);
-
 // SKU generator function (fixes ReferenceError)
 function generateSKU(name, brand) {
   // Simple SKU: first 3 letters of brand and name, timestamp
