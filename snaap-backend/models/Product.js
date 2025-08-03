@@ -49,7 +49,7 @@ const productSchema = new mongoose.Schema({
 
   // Descriptions
   shortDescription: { type: String, maxlength: 160 },
-  fullDescription: { type: String },
+  fullDescription: { type: String, maxlength: 2000 },
   keyFeatures: [{ type: String }], // ["5G support", "120Hz display"]
 
   // Organization

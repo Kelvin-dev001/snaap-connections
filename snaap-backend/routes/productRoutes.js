@@ -29,7 +29,7 @@ async function uploadBufferToCloudinary(buffer, filename) {
         resolve(result.secure_url);
       }
     );
-    streamifier.createReadStream(buffer).pipe(stream);
+    streamifier.createReadStream(buffer).pipe(stream); 
   });
 }
 
@@ -68,7 +68,7 @@ function extractArray(field, body) {
 // GET ALL PRODUCTS (client)
 router.get('/', async (req, res) => {
   try {
-    const { category, brand, featured, limit, minPrice, maxPrice } = req.query;
+    const { category, brand, featured, limit, minPrice, maxPrice, search } = req.query;
     const query = {};
     
     if (category) query.category = category;
@@ -79,22 +79,22 @@ router.get('/', async (req, res) => {
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { brand: { $regex: search, $options: 'i' } },
+        { category: { $regex: search, $options: 'i' } }
+      ];
+    }
 
     const products = await Product.find(query)
-      .limit(parseInt(limit) || 20)
+      .limit(parseInt(limit) || 1000) // default to 1000
       .sort({ createdAt: -1 });
-
-    // Images are now Cloudinary URLs, so no need to transform
-    const productsWithAbsoluteImages = products.map(prod => ({
-      ...prod.toObject()
-      // images: prod.images,
-      // thumbnail: prod.thumbnail
-    }));
 
     res.json({ 
       success: true, 
       count: products.length, 
-      products: productsWithAbsoluteImages
+      products: products.map(prod => prod.toObject())
     });
   } catch (err) {
     console.error('Error fetching products:', err);
