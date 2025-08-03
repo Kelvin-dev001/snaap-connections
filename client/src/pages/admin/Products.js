@@ -522,7 +522,7 @@ const Products = () => {
           </TableContainer>
 
           <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[5, 10, 25, 100, 250, 1000]}
             component="div"
             count={totalProducts}
             rowsPerPage={rowsPerPage}
