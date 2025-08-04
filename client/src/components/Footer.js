@@ -190,7 +190,7 @@ const Footer = () => (
           <Grid item xs={12} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <img
-                src="/logo192.png"
+                 src="/snaap-logo.jpeg"
                 alt="Snaap Connections"
                 width={48}
                 height={48}

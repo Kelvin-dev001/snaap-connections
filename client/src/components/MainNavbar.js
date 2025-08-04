@@ -36,11 +36,11 @@ const MainNavbar = ({ onMenuClick }) => {
               <MenuIcon />
             </IconButton>
           )}
-          <Avatar
-            src="/logo192.png"
-            sx={{ width: 40, height: 40, mr: 2 }}
-            alt="Site Logo"
-          />
+         <Avatar
+  src="/snaap-logo.jpeg"
+  sx={{ width: 40, height: 40, mr: 2 }}
+  alt="Snaap Connections Logo"
+/>
           <Typography
             variant="h6"
             noWrap
