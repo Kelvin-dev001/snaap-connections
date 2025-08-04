@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Grid, Card, CardActionArea } from "@mui/material";
+import { Box, Typography, Card, CardActionArea } from "@mui/material";
 import { Link } from "react-router-dom";
 import API from "../api/apiService"; // Adjust path if needed
 
@@ -11,7 +11,6 @@ const ShopByCategorySection = () => {
     API.getCategories()
       .then((res) => {
         const catArr = res.data?.categories || res.data || [];
-        // Map Cloudinary icon to image for display
         const catsWithFullImage = catArr.map(cat => ({
           ...cat,
           image: cat.icon && typeof cat.icon === "string"
@@ -28,8 +27,27 @@ const ShopByCategorySection = () => {
     <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "background.default" }}>
       <style>
         {`
+        .scroll-row {
+          display: flex;
+          flex-direction: row;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          gap: 18px;
+          scrollbar-width: thin;
+        }
+        .scroll-row::-webkit-scrollbar {
+          height: 8px;
+          background: #f5f7fa;
+        }
+        .scroll-row::-webkit-scrollbar-thumb {
+          background: #ddd;
+          border-radius: 4px;
+        }
         .flip-card {
           perspective: 900px;
+          min-width: 140px;
+          max-width: 160px;
+          flex: 0 0 auto;
         }
         .flip-card-inner {
           position: relative;
@@ -77,127 +95,128 @@ const ShopByCategorySection = () => {
       >
         Shop by Category
       </Typography>
-      <Grid container spacing={{ xs: 2, md: 4 }} justifyContent="center">
+      <Box className="scroll-row" sx={{ px: { xs: 1, md: 3 }, pb: 1 }}>
         {categories.map((cat, idx) => (
-          <Grid item xs={6} sm={4} md={2} key={cat._id || cat.name} sx={{ minWidth: 120 }}>
-            <Link
-              to={`/products?category=${encodeURIComponent(cat.name)}`}
-              style={{ textDecoration: "none" }}
+          <Link
+            to={`/products?category=${encodeURIComponent(cat.name)}`}
+            style={{ textDecoration: "none" }}
+            key={cat._id || cat.name}
+          >
+            <Card
+              className="flip-card"
+              elevation={0}
+              sx={{
+                borderRadius: "20px",
+                background: "#fff",
+                color: "primary.main",
+                boxShadow: "0 4px 24px 0 rgba(30,60,114,0.08)",
+                transition: "transform 0.35s cubic-bezier(.4,2,.4,1), box-shadow 0.25s",
+                cursor: "pointer",
+                position: "relative",
+                overflow: "visible",
+                border: "none",
+                minHeight: 180,
+                minWidth: 140,
+                maxWidth: 160,
+                "&:hover": {
+                  boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
+                  zIndex: 2
+                }
+              }}
+              tabIndex={0}
             >
-              <Card
-                className="flip-card"
-                elevation={0}
+              <CardActionArea
                 sx={{
                   borderRadius: "20px",
-                  background: "#fff",
-                  color: "primary.main",
-                  boxShadow: "0 4px 24px 0 rgba(30,60,114,0.08)",
-                  transition: "transform 0.35s cubic-bezier(.4,2,.4,1), box-shadow 0.25s",
-                  cursor: "pointer",
-                  position: "relative",
-                  overflow: "visible",
-                  border: "none",
                   minHeight: 180,
-                  "&:hover": {
-                    boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
-                    zIndex: 2
-                  }
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  p: 3,
+                  bgcolor: "transparent",
+                  "&:focus-visible": { outline: "none" }
                 }}
-                tabIndex={0}
               >
-                <CardActionArea
-                  sx={{
-                    borderRadius: "20px",
-                    minHeight: 180,
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    p: 3,
-                    bgcolor: "transparent",
-                    "&:focus-visible": { outline: "none" }
-                  }}
-                >
-                  <Box className="flip-card-inner" sx={{ width: "100%", height: "100%" }}>
-                    {/* Front Face */}
-                    <Box className="flip-card-front">
-                      <Box
-                        sx={{
-                          mb: 2.5,
-                          mt: 1,
-                          width: 80,
-                          height: 80,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: "15px",
-                          background: "#fff",
-                          boxShadow: "none",
-                        }}
-                      >
-                        {cat.image && typeof cat.image === "string" ? (
-                          <img
-                            src={cat.image}
-                            alt={cat.name}
-                            style={{
-                              width: 68,
-                              height: 68,
-                              objectFit: "contain",
-                              borderRadius: 12,
-                              background: "#fff"
-                            }}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              width: 68,
-                              height: 68,
-                              background: "#f0f0f0",
-                              borderRadius: 12,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "#bbb",
-                              fontSize: 32
-                            }}
-                          >
-                            {cat.name ? cat.name[0] : "?"}
-                          </Box>
-                        )}
-                      </Box>
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={700}
-                        sx={{
-                          fontSize: "1.10rem",
-                          letterSpacing: ".4px",
-                          textAlign: "center",
-                          textShadow: "none"
-                        }}
-                      >
-                        {cat.name}
-                      </Typography>
+                <Box className="flip-card-inner" sx={{ width: "100%", height: "100%" }}>
+                  {/* Front Face */}
+                  <Box className="flip-card-front">
+                    <Box
+                      sx={{
+                        mb: 2.5,
+                        mt: 1,
+                        width: 80,
+                        height: 80,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        borderRadius: "15px",
+                        background: "#fff",
+                        boxShadow: "none",
+                      }}
+                    >
+                      {cat.image && typeof cat.image === "string" ? (
+                        <img
+                          src={cat.image}
+                          alt={cat.name}
+                          style={{
+                            width: 68,
+                            height: 68,
+                            objectFit: "contain",
+                            borderRadius: 12,
+                            background: "#fff"
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            width: 68,
+                            height: 68,
+                            background: "#f0f0f0",
+                            borderRadius: 12,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: "#bbb",
+                            fontSize: 32
+                          }}
+                        >
+                          {cat.name ? cat.name[0] : "?"}
+                        </Box>
+                      )}
                     </Box>
-                    {/* Back Face */}
-                    <Box className="flip-card-back">
-                      <Typography
-                        variant="subtitle1"
-                        fontWeight={700}
-                        sx={{
-                          fontSize: "1.10rem",
-                          letterSpacing: ".4px",
-                          textAlign: "center"
-                        }}
-                      >
-                        Shop {cat.name}
-                      </Typography>
-                    </Box>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={700}
+                      sx={{
+                        fontSize: "1.10rem",
+                        letterSpacing: ".4px",
+                        textAlign: "center",
+                        textShadow: "none"
+                      }}
+                    >
+                      {cat.name}
+                    </Typography>
                   </Box>
-                </CardActionArea>
-              </Card>
-            </Link>
-          </Grid>
+                  {/* Back Face */}
+                  <Box className="flip-card-back">
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={700}
+                      sx={{
+                        fontSize: "1.10rem",
+                        letterSpacing: ".4px",
+                        textAlign: "center"
+                      }}
+                    >
+                      Shop {cat.name}
+                    </Typography>
+                  </Box>
+                </Box>
+              </CardActionArea>
+            </Card>
+          </Link>
         ))}
-      </Grid>
+      </Box>
     </Box>
   );
 };
