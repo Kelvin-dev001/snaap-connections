@@ -53,10 +53,10 @@ const footerLinks = [
 ];
 
 const socialLinks = [
-  { icon: <Facebook />, href: 'https://facebook.com/', label: 'Facebook' },
-  { icon: <Twitter />, href: 'https://twitter.com/', label: 'Twitter' },
-  { icon: <Instagram />, href: 'https://instagram.com/', label: 'Instagram' },
-  { icon: <WhatsApp />, href: 'https://wa.me/254759293030', label: 'WhatsApp' }
+  { icon: <Facebook />, href: 'https://www.facebook.com/share/1BF9FWk1w7/', label: 'Facebook' },
+  { icon: <TikTok />, href: 'https://www.tiktok.com/@snaap_connections?_t=ZM-8yavm2c5wJC&_r=1', label: 'TikTok' },
+  { icon: <Instagram />, href: 'https://www.instagram.com/snaap_connections1?igsh=Yzc2dDkyejVqeDZl', label: 'Instagram' },
+  { icon: <WhatsApp />, href: 'https://wa.me/254722800278', label: 'WhatsApp' }
 ];
 
 // Keyframes for bluish animated gradient
@@ -280,7 +280,7 @@ const Footer = () => (
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
               <LocationOn sx={{ color: '#6dd5ed' }} />
               <Typography variant="body2" sx={{ color: '#e6f2ff', opacity: 0.9 }}>
-                Nairobi, Kenya
+                Mombasa, Kenya
               </Typography>
             </Stack>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
@@ -293,7 +293,7 @@ const Footer = () => (
             </Stack>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
               <Phone sx={{ color: '#6dd5ed' }} />
-              <a href="tel:+254759293030" style={{ color: 'inherit', textDecoration: 'none' }}>
+              <a href="tel:+254722800278" style={{ color: 'inherit', textDecoration: 'none' }}>
                 <Typography variant="body2" sx={{ color: '#e6f2ff', opacity: 0.9 }}>
                   +254 759 293030
                 </Typography>
