@@ -18,6 +18,49 @@ import ErrorAlert from '../../components/ErrorAlert';
 
 const MAX_IMAGES = 10;
 
+const emptyProduct = {
+  name: '',
+  price: 0,
+  discountPrice: '',
+  currency: 'KES',
+  isOnSale: false,
+  brand: '',
+  model: '',
+  category: '',
+  stockQuantity: 0,
+  inStock: true,
+  sku: '',
+  dealType: "", // <-- Added dealType support
+  specs: {
+    storage: '',
+    ram: '',
+    screenSize: '',
+    camera: '',
+    battery: '',
+    processor: '',
+    os: '',
+    material: '',
+    wattage: '',
+    connectivity: '',
+  },
+  accessoryType: '',
+  compatibleWith: [],
+  images: [],
+  thumbnail: '',
+  videoUrl: '',
+  shortDescription: '',
+  fullDescription: '',
+  keyFeatures: [],
+  tags: [],
+  relatedProducts: [],
+  isFeatured: false,
+  isNewRelease: false,
+  releaseDate: '',
+  warrantyPeriod: '',
+  returnPolicyDays: 30,
+  isActive: true, // for UI only
+};
+
 const Products = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -69,48 +112,6 @@ const Products = () => {
 
     fetchData();
   }, [page, rowsPerPage, searchTerm]);
-
-  const emptyProduct = {
-    name: '',
-    price: 0,
-    discountPrice: '',
-    currency: 'KES',
-    isOnSale: false,
-    brand: '',
-    model: '',
-    category: '',
-    stockQuantity: 0,
-    inStock: true,
-    sku: '',
-    specs: {
-      storage: '',
-      ram: '',
-      screenSize: '',
-      camera: '',
-      battery: '',
-      processor: '',
-      os: '',
-      material: '',
-      wattage: '',
-      connectivity: '',
-    },
-    accessoryType: '',
-    compatibleWith: [],
-    images: [],
-    thumbnail: '',
-    videoUrl: '',
-    shortDescription: '',
-    fullDescription: '',
-    keyFeatures: [],
-    tags: [],
-    relatedProducts: [],
-    isFeatured: false,
-    isNewRelease: false,
-    releaseDate: '',
-    warrantyPeriod: '',
-    returnPolicyDays: 30,
-    isActive: true, // for UI only
-  };
 
   const handleOpenDialog = (product = null) => {
     setCurrentProduct(product ? {
@@ -224,6 +225,7 @@ const Products = () => {
     if (currentProduct.releaseDate) formData.append('releaseDate', currentProduct.releaseDate);
     if (currentProduct.warrantyPeriod) formData.append('warrantyPeriod', currentProduct.warrantyPeriod);
     if (currentProduct.returnPolicyDays) formData.append('returnPolicyDays', currentProduct.returnPolicyDays);
+    formData.append('dealType', currentProduct.dealType || ""); // <-- Add dealType
 
     // Array type fields
     if (currentProduct.keyFeatures && currentProduct.keyFeatures.length > 0)
@@ -639,6 +641,21 @@ const Products = () => {
                 label="On Sale"
                 sx={{ mt: 1 }}
               />
+              {/* DealType select */}
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Deal Type</InputLabel>
+                <Select
+                  label="Deal Type"
+                  name="dealType"
+                  value={currentProduct?.dealType || ""}
+                  onChange={handleInputChange}
+                >
+                  <MenuItem value="">None</MenuItem>
+                  <MenuItem value="dealOfTheDay">Deal of the Day</MenuItem>
+                  <MenuItem value="flashSale">Flash Sale</MenuItem>
+                  <MenuItem value="limitedOffer">Limited Offer</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 fullWidth
                 label="SKU"

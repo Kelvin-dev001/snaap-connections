@@ -55,6 +55,13 @@ const API = {
   getProducts: (params = {}) => api.get('/products', { params }),
   getProduct: (id) => api.get(`/products/${id}`),
   getFeaturedProducts: () => api.get('/products?featured=true&limit=8'),
+  // Added Pocket Friendly
+  getPocketFriendlyProducts: ({ maxPrice = 20000, limit = 10 } = {}) =>
+    api.get('/products', { params: { maxPrice, limit, sort: 'price_asc' } }),
+  // Added Deals/Promotions
+  getDealsProducts: ({ limit = 30 } = {}) =>
+    api.get('/products', { params: { isOnSale: true, limit } }),
+
   createProduct: (data) => api.post('/products', data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),

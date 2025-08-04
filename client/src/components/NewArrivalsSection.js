@@ -81,7 +81,7 @@ const formatPrice = (price) =>
     maximumFractionDigits: 0,
   }).format(price);
 
-const NewArrivalsSection = ({ products = demoNewArrivals }) => {
+const NewArrivalsSection = ({ products = demoNewArrivals, title = "New Smartphones in Kenya" }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isTablet = useMediaQuery(theme.breakpoints.down("md"));
@@ -159,7 +159,7 @@ const NewArrivalsSection = ({ products = demoNewArrivals }) => {
           fontFamily: "'Montserrat', 'Roboto', sans-serif"
         }}
       >
-        New Arrivals
+        {title}
       </Typography>
       <Slider {...sliderSettings}>
         {products.map((product) => (

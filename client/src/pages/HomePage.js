@@ -8,6 +8,8 @@ import ShopByBrandSection from '../components/ShopByBrandSection';
 import ShopByCategorySection from '../components/ShopByCategorySection';
 import FeaturedProductsSection from '../components/FeaturedProductsSection';
 import NewArrivalsSection from '../components/NewArrivalsSection';
+import PocketFriendlySection from '../components/PocketFriendlySection';
+import DealsSection from '../components/DealsSection';
 import ReviewsSection from '../components/ReviewsSection';
 import WhyChooseUsSection from '../components/WhyChooseUsSection';
 import WhatsAppCTASection from '../components/WhatsAppCTASection';
@@ -76,7 +78,9 @@ const HomePage = () => {
       <ShopByBrandSection brands={brands} />
       <ShopByCategorySection categories={categories} />
       <FeaturedProductsSection products={featuredProducts} />
-      <NewArrivalsSection products={newArrivals} />
+      <PocketFriendlySection />
+      <DealsSection />
+      <NewArrivalsSection products={newArrivals} title="New Smartphones in Kenya" />
       {/* Pass recentReviews to ReviewsSection for homepage carousel */}
       <ReviewsSection reviews={recentReviews} isHomepage />
       <WhyChooseUsSection />
