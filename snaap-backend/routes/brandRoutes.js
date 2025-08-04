@@ -1,37 +1,37 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
+const { upload } = require('../middleware/upload');
 const Brand = require('../models/brand');
 const requireAdmin = require('../middleware/requireAdmin');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
-// Multer setup for logo uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/brands/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-brand' + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
-
-// Helper to make absolute URL
-function makeImageUrl(req, path) {
-  if (!path) return path;
-  if (path.startsWith('http')) return path;
-  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+// Helper to upload buffer to Cloudinary
+async function uploadToCloudinary(buffer, filename) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'brands',
+        public_id: filename ? filename.split('.')[0] : undefined,
+        resource_type: 'image'
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
 }
 
-// GET all brands (logo as absolute URL) - PUBLIC
+// GET all brands (logos are already absolute URLs from Cloudinary) - PUBLIC
 router.get('/', async (req, res) => {
-  const brands = await Brand.find();
-  const brandsWithAbsoluteLogo = brands.map(brand => ({
-    ...brand.toObject(),
-    logo: makeImageUrl(req, brand.logo)
-  }));
-  res.json(brandsWithAbsoluteLogo);
+  try {
+    const brands = await Brand.find();
+    res.json(brands);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch brands' });
+  }
 });
 
 // All routes below require admin authentication
@@ -39,39 +39,50 @@ router.use(requireAdmin);
 
 // CREATE brand
 router.post('/', upload.single('logo'), async (req, res) => {
-  const { name, description } = req.body;
-  const logo = req.file ? `/uploads/brands/${req.file.filename}` : req.body.logo || "";
-  const brand = new Brand({ name, description, logo });
-  await brand.save();
-  const brandWithAbsoluteLogo = {
-    ...brand.toObject(),
-    logo: makeImageUrl(req, brand.logo)
-  };
-  res.status(201).json(brandWithAbsoluteLogo);
+  try {
+    const { name, description } = req.body;
+    let logoUrl = req.body.logo || "";
+    if (req.file && req.file.buffer) {
+      // Upload to Cloudinary
+      logoUrl = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+    }
+    const brand = new Brand({ name, description, logo: logoUrl });
+    await brand.save();
+    res.status(201).json(brand);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create brand' });
+  }
 });
 
 // UPDATE brand
 router.put('/:id', upload.single('logo'), async (req, res) => {
-  const { name, description } = req.body;
-  let update = { name, description };
-  if (req.file) {
-    update.logo = `/uploads/brands/${req.file.filename}`;
-  } else if (req.body.logo) {
-    update.logo = req.body.logo;
+  try {
+    const { name, description } = req.body;
+    let update = { name, description };
+
+    if (req.file && req.file.buffer) {
+      // Upload to Cloudinary
+      update.logo = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+    } else if (req.body.logo) {
+      update.logo = req.body.logo;
+    }
+
+    const brand = await Brand.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!brand) return res.status(404).json({ message: 'Brand not found' });
+    res.json(brand);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update brand' });
   }
-  const brand = await Brand.findByIdAndUpdate(req.params.id, update, { new: true });
-  if (!brand) return res.status(404).json({ message: 'Brand not found' });
-  const brandWithAbsoluteLogo = {
-    ...brand.toObject(),
-    logo: makeImageUrl(req, brand.logo)
-  };
-  res.json(brandWithAbsoluteLogo);
 });
 
 // DELETE brand
 router.delete('/:id', async (req, res) => {
-  await Brand.findByIdAndDelete(req.params.id);
-  res.status(204).send();
+  try {
+    await Brand.findByIdAndDelete(req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete brand' });
+  }
 });
 
 module.exports = router;

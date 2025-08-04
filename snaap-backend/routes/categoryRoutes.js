@@ -1,77 +1,88 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
+const { upload } = require('../middleware/upload');
 const Category = require('../models/category');
 const requireAdmin = require('../middleware/requireAdmin');
+const cloudinary = require('../config/cloudinary');
+const streamifier = require('streamifier');
 
-// Multer setup for icon uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/categories/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-category' + path.extname(file.originalname));
-  }
-});
-const upload = multer({ storage });
-
-// Helper to make absolute URL
-function makeImageUrl(req, path) {
-  if (!path) return path;
-  if (path.startsWith('http')) return path;
-  const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+// Helper to upload buffer to Cloudinary
+async function uploadToCloudinary(buffer, filename) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: 'categories',
+        public_id: filename ? filename.split('.')[0] : undefined,
+        resource_type: 'image'
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    streamifier.createReadStream(buffer).pipe(stream);
+  });
 }
 
-// GET all categories (icon as absolute URL) - PUBLIC
+// GET all categories (icons are absolute Cloudinary URLs) - PUBLIC
 router.get('/', async (req, res) => {
-  const categories = await Category.find();
-  const categoriesWithAbsoluteIcon = categories.map(category => ({
-    ...category.toObject(),
-    icon: makeImageUrl(req, category.icon)
-  }));
-  res.json(categoriesWithAbsoluteIcon);
+  try {
+    const categories = await Category.find();
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch categories' });
+  }
 });
 
-// All routes below this require admin authentication
+// All routes below require admin authentication
 router.use(requireAdmin);
 
 // CREATE category
 router.post('/', upload.single('icon'), async (req, res) => {
-  const { name, description } = req.body;
-  const icon = req.file ? `/uploads/categories/${req.file.filename}` : req.body.icon || "";
-  const category = new Category({ name, description, icon });
-  await category.save();
-  const categoryWithAbsoluteIcon = {
-    ...category.toObject(),
-    icon: makeImageUrl(req, category.icon)
-  };
-  res.status(201).json(categoryWithAbsoluteIcon);
+  try {
+    const { name, description } = req.body;
+    let iconUrl = req.body.icon || "";
+    if (req.file && req.file.buffer) {
+      // Upload to Cloudinary
+      iconUrl = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+    }
+    const category = new Category({ name, description, icon: iconUrl });
+    await category.save();
+    res.status(201).json(category);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to create category' });
+  }
 });
 
 // UPDATE category
 router.put('/:id', upload.single('icon'), async (req, res) => {
-  const { name, description } = req.body;
-  let update = { name, description };
-  if (req.file) {
-    update.icon = `/uploads/categories/${req.file.filename}`;
-  } else if (req.body.icon) {
-    update.icon = req.body.icon;
+  try {
+    const { name, description } = req.body;
+    let update = { name, description };
+
+    if (req.file && req.file.buffer) {
+      // Upload to Cloudinary
+      update.icon = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+    } else if (req.body.icon) {
+      update.icon = req.body.icon;
+    }
+
+    const category = await Category.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!category) return res.status(404).json({ message: 'Category not found' });
+    res.json(category);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update category' });
   }
-  const category = await Category.findByIdAndUpdate(req.params.id, update, { new: true });
-  if (!category) return res.status(404).json({ message: 'Category not found' });
-  const categoryWithAbsoluteIcon = {
-    ...category.toObject(),
-    icon: makeImageUrl(req, category.icon)
-  };
-  res.json(categoryWithAbsoluteIcon);
 });
 
 // DELETE category
 router.delete('/:id', async (req, res) => {
-  await Category.findByIdAndDelete(req.params.id);
-  res.status(204).send();
+  try {
+    await Category.findByIdAndDelete(req.params.id);
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to delete category' });
+  }
 });
 
 module.exports = router;
