@@ -68,12 +68,13 @@ function extractArray(field, body) {
 // GET ALL PRODUCTS (client)
 router.get('/', async (req, res) => {
   try {
-    const { category, brand, featured, limit, minPrice, maxPrice, search } = req.query;
+    const { category, brand, featured, limit, minPrice, maxPrice, search, dealType } = req.query;
     const query = {};
     
     if (category) query.category = category;
     if (brand) query.brand = brand;
     if (featured) query.isFeatured = true;
+    if (dealType) query.dealType = dealType;
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
@@ -222,7 +223,8 @@ router.post('/', updatedUpload, async (req, res) => {
       isNewRelease: req.body.isNewRelease === 'true' || false,
       releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : undefined,
       warrantyPeriod: req.body.warrantyPeriod || '1 year',
-      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30
+      returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30,
+      dealType: req.body.dealType || ""
     };
 
     // Save product
@@ -321,7 +323,8 @@ router.put('/:id', updatedUpload, async (req, res) => {
       isNewRelease: typeof req.body.isNewRelease !== 'undefined' ? req.body.isNewRelease === 'true' : existingProduct.isNewRelease,
       releaseDate: typeof req.body.releaseDate !== 'undefined' && req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
       warrantyPeriod: typeof req.body.warrantyPeriod !== 'undefined' ? req.body.warrantyPeriod : existingProduct.warrantyPeriod,
-      returnPolicyDays: typeof req.body.returnPolicyDays !== 'undefined' ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays
+      returnPolicyDays: typeof req.body.returnPolicyDays !== 'undefined' ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays,
+      dealType: typeof req.body.dealType !== 'undefined' ? req.body.dealType : existingProduct.dealType
     };
 
     const updatedProduct = await Product.findByIdAndUpdate(

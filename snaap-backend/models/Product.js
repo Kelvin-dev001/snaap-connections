@@ -16,6 +16,13 @@ const productSchema = new mongoose.Schema({
   currency: { type: String, default: 'KES' },
   isOnSale: { type: Boolean, default: false },
 
+  // 🔥 DEAL TYPE SUPPORT
+  dealType: { 
+    type: String, 
+    enum: ["", "dealOfTheDay", "flashSale", "limitedOffer"],
+    default: ""
+  },
+
   // Inventory
   sku: { type: String, unique: true }, // "APL-IP15P-128-BLK"
   stockQuantity: { type: Number, default: 0 },

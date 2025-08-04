@@ -11,12 +11,13 @@ function makeImageUrl(req, path) {
 // Get all products (with filtering)
 exports.getAllProducts = async (req, res) => {
   try {
-    const { brand, category, minPrice, maxPrice, sort } = req.query;
+    const { brand, category, minPrice, maxPrice, sort, dealType } = req.query;
     const query = {};
 
     // Apply filters
     if (brand) query.brand = brand;
     if (category) query.category = category;
+    if (dealType) query.dealType = dealType;
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
