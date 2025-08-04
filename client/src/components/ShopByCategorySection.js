@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Grid, Card, CardActionArea, CardContent } from "@mui/material";
+import { Box, Typography, Grid, Card, CardActionArea } from "@mui/material";
 import { Link } from "react-router-dom";
 import API from "../api/apiService"; // Adjust path if needed
 
@@ -11,13 +11,12 @@ const ShopByCategorySection = () => {
     API.getCategories()
       .then((res) => {
         const catArr = res.data?.categories || res.data || [];
-        // If image path is not absolute, prepend server URL
+        // Map Cloudinary icon to image for display
         const catsWithFullImage = catArr.map(cat => ({
           ...cat,
-          // Change 'icon' to 'image' if your backend uses 'image' for categories
-          image: cat.image && typeof cat.image === "string" && !cat.image.startsWith("http")
-            ? `http://localhost:5000${cat.image}`
-            : cat.image
+          image: cat.icon && typeof cat.icon === "string"
+            ? cat.icon
+            : "",
         }));
         if (isMounted) setCategories(catsWithFullImage);
       })
