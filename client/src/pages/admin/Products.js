@@ -960,6 +960,7 @@ const Products = () => {
                 <Grid item xs={12} sm={6} md={4}>
                   <TextField
                     fullWidth
+                  
                     label="OS"
                     name="os"
                     value={currentProduct?.specs?.os || ''}
