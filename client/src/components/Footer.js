@@ -9,6 +9,7 @@ import {
   Divider,
   Stack
 } from '@mui/material';
+import { SiTiktok } from "react-icons/si";
 import {
   Facebook,
   TikTok,
@@ -54,7 +55,7 @@ const footerLinks = [
 
 const socialLinks = [
   { icon: <Facebook />, href: 'https://www.facebook.com/share/1BF9FWk1w7/', label: 'Facebook' },
-  { icon: <TikTok />, href: 'https://www.tiktok.com/@snaap_connections?_t=ZM-8yavm2c5wJC&_r=1', label: 'TikTok' },
+  { icon: <SiTiktok />, href: 'https://www.tiktok.com/@snaap_connections?_t=ZM-8yavm2c5wJC&_r=1', label: 'TikTok' },
   { icon: <Instagram />, href: 'https://www.instagram.com/snaap_connections1?igsh=Yzc2dDkyejVqeDZl', label: 'Instagram' },
   { icon: <WhatsApp />, href: 'https://wa.me/254722800278', label: 'WhatsApp' }
 ];
