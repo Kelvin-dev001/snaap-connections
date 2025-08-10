@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import {
   Facebook,
-  Twitter,
+  TikTok,
   Instagram,
   WhatsApp,
   LocationOn,
@@ -207,7 +207,7 @@ const Footer = () => (
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ mb: 2, maxWidth: 350, opacity: 0.9 }}>
-              Your one-stop shop for the latest tech gadgets, unbeatable deals, and exceptional customer service across Kenya and beyond.
+              Your one-stop shop for the latest tech gadgets, unbeatable deals, and exceptional customer service across Kenya.
             </Typography>
             <Stack spacing={1} direction="row" sx={{ mb: 2 }}>
               {socialLinks.map(({ icon, href, label }, idx) => (
@@ -280,7 +280,7 @@ const Footer = () => (
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
               <LocationOn sx={{ color: '#6dd5ed' }} />
               <Typography variant="body2" sx={{ color: '#e6f2ff', opacity: 0.9 }}>
-                Mombasa, Kenya
+                Digo Rd Opp Baroda Mall, Mombasa, Kenya.
               </Typography>
             </Stack>
             <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
@@ -295,7 +295,7 @@ const Footer = () => (
               <Phone sx={{ color: '#6dd5ed' }} />
               <a href="tel:+254722800278" style={{ color: 'inherit', textDecoration: 'none' }}>
                 <Typography variant="body2" sx={{ color: '#e6f2ff', opacity: 0.9 }}>
-                  +254 759 293030
+                  +254 722800278
                 </Typography>
               </a>
             </Stack>

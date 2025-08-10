@@ -1,19 +1,7 @@
 import React from "react";
 import Slider from "react-slick";
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  CardMedia,
-  Button,
-  Chip,
-  Stack,
-  useTheme,
-  useMediaQuery,
-  Rating
-} from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
+import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
+import ProductCard from "./ProductCard";
 
 // Example products for demo/testing, replace with your prop or API data
 const demoProducts = [
@@ -23,6 +11,7 @@ const demoProducts = [
     price: 105000,
     discountPrice: 115000,
     category: "Smartphones",
+    brand: "Samsung",
     thumbnail: "/products/s24ultra.jpg",
     images: [],
     rating: 4.8,
@@ -34,6 +23,7 @@ const demoProducts = [
     price: 160000,
     discountPrice: null,
     category: "Smartphones",
+    brand: "Apple",
     thumbnail: "/products/iphone15pro.jpg",
     images: [],
     rating: 4.9,
@@ -45,6 +35,7 @@ const demoProducts = [
     price: 42000,
     discountPrice: 48000,
     category: "Smartphones",
+    brand: "Xiaomi",
     thumbnail: "/products/redminote13.jpg",
     images: [],
     rating: 4.5,
@@ -56,19 +47,13 @@ const demoProducts = [
     price: 53000,
     discountPrice: 58000,
     category: "Smartphones",
+    brand: "OPPO",
     thumbnail: "/products/reno11.jpg",
     images: [],
     rating: 4.6,
     isFeatured: true,
   }
 ];
-
-const formatPrice = (price) =>
-  new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 0,
-  }).format(price);
 
 const FeaturedProductsSection = ({ products = demoProducts }) => {
   const theme = useTheme();
@@ -124,18 +109,16 @@ const FeaturedProductsSection = ({ products = demoProducts }) => {
       <Slider {...sliderSettings}>
         {products.map((product) => (
           <Box key={product._id} sx={{ px: 2, outline: "none" }}>
-            <Card
-              className="featured-product-card"
+            <ProductCard
+              product={product}
+              badge={product.isFeatured ? "FEATURED" : undefined}
+              showWhatsApp={true}
+              showViewBtn={true}
               sx={{
+                minHeight: 420,
                 borderRadius: "22px",
                 boxShadow: "0 4px 24px 0 rgba(30,60,114,0.12)",
                 transition: "transform 0.28s cubic-bezier(.4,2,.4,1), box-shadow 0.28s",
-                minHeight: 420,
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                position: "relative",
-                overflow: "visible",
                 bgcolor: "#fff",
                 "&:hover": {
                   boxShadow: "0 12px 46px 0 #1e3c72cc",
@@ -143,123 +126,7 @@ const FeaturedProductsSection = ({ products = demoProducts }) => {
                   zIndex: 3
                 }
               }}
-              elevation={0}
-            >
-              <Box sx={{ position: "relative", pt: 3, px: 2 }}>
-                <CardMedia
-                  component="img"
-                  height={isMobile ? 160 : 210}
-                  image={
-                    product.thumbnail ||
-                    (product.images && product.images[0]) ||
-                    "/fallback.png"
-                  }
-                  alt={product.name}
-                  sx={{
-                    objectFit: "contain",
-                    mx: "auto",
-                    maxHeight: isMobile ? 160 : 210,
-                    borderRadius: "18px",
-                    boxShadow: "0px 2px 18px #6dd5ed33"
-                  }}
-                />
-                {product.isFeatured && (
-                  <Chip
-                    label="Featured"
-                    size="small"
-                    color="primary"
-                    sx={{
-                      position: "absolute",
-                      top: 12,
-                      left: 12,
-                      fontWeight: 600,
-                      zIndex: 2,
-                      bgcolor: "#6dd5ed",
-                      color: "#fff",
-                      fontSize: "0.92rem",
-                      boxShadow: "0 1px 8px #6dd5ed33"
-                    }}
-                  />
-                )}
-              </Box>
-              <CardContent>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ mb: 0.5 }}
-                >
-                  {product.category}
-                </Typography>
-                <Typography
-                  variant="h6"
-                  fontWeight={700}
-                  gutterBottom
-                  sx={{
-                    color: "#1e3c72",
-                    textShadow: "0 2px 8px #6dd5ed22"
-                  }}
-                >
-                  {product.name}
-                </Typography>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <Rating
-                    value={product.rating || 4.5}
-                    precision={0.1}
-                    readOnly
-                    size="small"
-                    icon={<StarIcon fontSize="inherit" htmlColor="#6dd5ed" />}
-                    emptyIcon={<StarIcon fontSize="inherit" htmlColor="#e0e0e0" />}
-                  />
-                  <Typography variant="body2" sx={{ ml: 0.5 }}>
-                    {product.rating?.toFixed(1) || "4.5"}
-                  </Typography>
-                </Stack>
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <Typography
-                    variant="h6"
-                    color="primary"
-                    fontWeight={700}
-                  >
-                    {formatPrice(product.price)}
-                  </Typography>
-                  {product.discountPrice && (
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ textDecoration: "line-through" }}
-                    >
-                      {formatPrice(product.discountPrice)}
-                    </Typography>
-                  )}
-                </Stack>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  sx={{
-                    mt: 2,
-                    borderRadius: "50px",
-                    fontWeight: 700,
-                    background:
-                      "linear-gradient(96deg,#1e3c72 50%,#6dd5ed 100%)",
-                    color: "#fff",
-                    textTransform: "none",
-                    boxShadow: "0 2px 12px #6dd5ed33",
-                    fontSize: "1.07rem",
-                    transition: "all 0.19s cubic-bezier(.4,2,.4,1)",
-                    "&:hover": {
-                      background:
-                        "linear-gradient(96deg,#6dd5ed 10%,#1e3c72 90%)",
-                      color: "#fff",
-                      boxShadow: "0 2px 24px #1e3c72cc",
-                      transform: "scale(1.06)"
-                    }
-                  }}
-                  href={`/products/${product._id}`}
-                >
-                  View
-                </Button>
-              </CardContent>
-            </Card>
+            />
           </Box>
         ))}
       </Slider>
