@@ -36,8 +36,8 @@ const HomePage = () => {
           brandsRes,
           reviewsRes
         ] = await Promise.all([
-          API.getFeaturedProducts({ limit: 1000 }),
-          API.getProducts({ sort: 'createdAt', limit: 1000 }),
+          API.getFeaturedProducts({ limit: 24 }),
+          API.getProducts({ sort: 'createdAt', limit: 24 }),
           API.getCategories(),
           API.getBrands(),
           API.getRecentReviews() // Fetches recent approved reviews for homepage
