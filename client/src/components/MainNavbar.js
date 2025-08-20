@@ -12,7 +12,7 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { SiBrandfolder } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
-import AutoCompleteSearch from "./components/AutoCompleteSearch"; // adjust path if needed
+import AutoCompleteSearch from "./AutoCompleteSearch"; // adjust path if needed
 
 const menuSections = [
   { label: "All Products", icon: <StorefrontIcon />, link: "/products" },
