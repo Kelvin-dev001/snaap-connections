@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Slider } from '@mui/material';
 import {
   Box, Typography, Button, Grid, Card, CardContent, CardMedia,
   Chip, Container, Pagination, Select, MenuItem, IconButton, useTheme,
-  useMediaQuery, Skeleton, Divider
+  useMediaQuery, Slider, Skeleton, Divider
 } from '@mui/material';
 import {
   Favorite, FavoriteBorder, Star, Tune, Close, WhatsApp
