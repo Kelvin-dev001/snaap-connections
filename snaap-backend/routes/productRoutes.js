@@ -88,9 +88,21 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    const products = await Product.find(query)
-      .limit(parseInt(limit) || 1000) // default to 1000
-      .sort({ createdAt: -1 });
+    const { sort } = req.query;
+let products;
+
+if (sort === 'random') {
+  // Use aggregation pipeline to get random products
+  products = await Product.aggregate([
+    { $match: query },
+    { $sample: { size: parseInt(limit) || 1000 } }
+  ]);
+} else {
+  // Default sort
+  products = await Product.find(query)
+    .limit(parseInt(limit) || 1000)
+    .sort({ createdAt: -1 });
+}
 
     res.json({ 
       success: true, 
