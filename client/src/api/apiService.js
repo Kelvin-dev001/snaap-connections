@@ -19,7 +19,6 @@ if (!apiBaseUrl) {
 console.log("API base URL:", apiBaseUrl);
 
 // --- JWT TOKEN HANDLING ---
-// Store token in localStorage under 'jwtToken'
 export function setToken(token) {
   localStorage.setItem('jwtToken', token);
 }
@@ -53,12 +52,18 @@ api.interceptors.request.use(
 const API = {
   // Product endpoints
   getProducts: (params = {}) => api.get('/products', { params }),
+
   getProduct: (id) => api.get(`/products/${id}`),
-  getFeaturedProducts: () => api.get('/products?featured=true&limit=8'),
-  // Added Pocket Friendly
+
+  // Featured products: accepts custom params (limit, sort, etc)
+  getFeaturedProducts: (params = {}) =>
+    api.get('/products', { params: { featured: true, ...params } }),
+
+  // Pocket Friendly
   getPocketFriendlyProducts: ({ maxPrice = 20000, limit = 10 } = {}) =>
     api.get('/products', { params: { maxPrice, limit, sort: 'price_asc' } }),
-  // Added Deals/Promotions
+
+  // Deals/Promotions
   getDealsProducts: ({ limit = 30 } = {}) =>
     api.get('/products', { params: { isOnSale: true, limit } }),
 
@@ -71,16 +76,28 @@ const API = {
   createCategory: (data) => api.post('/categories', data),
   updateCategory: (id, data) => api.put(`/categories/${id}`, data),
   deleteCategory: (id) => api.delete(`/categories/${id}`),
-  createCategoryMultipart: (formData) => api.post('/categories', formData, { headers: { "Content-Type": "multipart/form-data" } }),
-  updateCategoryMultipart: (id, formData) => api.put(`/categories/${id}`, formData, { headers: { "Content-Type": "multipart/form-data" } }),
+  createCategoryMultipart: (formData) =>
+    api.post('/categories', formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
+  updateCategoryMultipart: (id, formData) =>
+    api.put(`/categories/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
 
   // Brand endpoints
   getBrands: () => api.get('/brands'),
   createBrand: (data) => api.post('/brands', data),
   updateBrand: (id, data) => api.put(`/brands/${id}`, data),
   deleteBrand: (id) => api.delete(`/brands/${id}`),
-  createBrandMultipart: (formData) => api.post('/brands', formData, { headers: { "Content-Type": "multipart/form-data" } }),
-  updateBrandMultipart: (id, formData) => api.put(`/brands/${id}`, formData, { headers: { "Content-Type": "multipart/form-data" } }),
+  createBrandMultipart: (formData) =>
+    api.post('/brands', formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
+  updateBrandMultipart: (id, formData) =>
+    api.put(`/brands/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" }
+    }),
 
   // Dashboard stats (admin)
   getDashboardStats: () => api.get('/admin/dashboard'),
@@ -104,28 +121,16 @@ const API = {
   updateCustomer: (id, data) => api.patch(`/admin/customers/${id}`, data),
 
   // ---- REVIEW ENDPOINTS ----
-  // Get reviews for a product (public/approved only)
   getProductReviews: (productId) => api.get(`/products/${productId}/reviews`),
-
-  // Submit a review for a product (open to all)
   submitProductReview: (productId, data) => api.post(`/products/${productId}/reviews`, data),
-
-  // Fetch recent approved reviews for homepage
   getRecentReviews: () => api.get('/reviews/recent'),
-
-  // ADMIN: Get all reviews (for moderation)
   getAllReviews: () => api.get('/admin/reviews'),
-
-  // ADMIN: Approve a review
   approveReview: (reviewId) => api.patch(`/admin/reviews/${reviewId}/approve`),
-
-  // ADMIN: Delete a review
   deleteReview: (reviewId) => api.delete(`/admin/reviews/${reviewId}`),
 
   // =======================
   // Auth/JWT
   // =======================
-  // Log in as admin (password only) -- now expects and stores a token!
   login: async ({ password }) => {
     const response = await api.post('/auth/login', { password });
     if (response.data && response.data.token) {
@@ -133,14 +138,10 @@ const API = {
     }
     return response;
   },
-  // Log out admin (just remove the token client-side)
   logout: () => {
     removeToken();
-    // Optionally, you can call the backend logout endpoint if needed:
-    // return api.post('/auth/logout');
     return Promise.resolve();
   },
-  // Check admin JWT
   checkAdmin: () => api.get('/auth/check'),
 };
 

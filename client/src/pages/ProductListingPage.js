@@ -135,7 +135,7 @@ const ProductListingPage = () => {
   const clearFilters = () => {
     setFilters({
       page: 1,
-      limit: 12,
+      limit: 1000,
       category: '',
       brand: '',
       minPrice: 0,
@@ -180,22 +180,20 @@ const ProductListingPage = () => {
   ];
 
   if (loading && filters.page === 1) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
     return (
-      <Container maxWidth="xl" sx={{ py: 4 }}>
-        <Grid container spacing={3} columns={12}>
-          {[...Array(filters.limit)].map((_, idx) => (
-            <Grid key={idx} sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 4', lg: 'span 3' } }}>
-              <Card sx={{ borderRadius: 2, boxShadow: 3 }}>
-                <Skeleton variant="rectangular" height={220} />
-                <CardContent>
-                  <Skeleton width="60%" />
-                  <Skeleton width="40%" />
-                  <Skeleton width="80%" />
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <ErrorAlert error={error} onClose={() => setError(null)} />
+        <Button
+          variant="contained"
+          onClick={() => window.location.reload()}
+          sx={{ mt: 2 }}
+        >
+          Retry
+        </Button>
       </Container>
     );
   }
