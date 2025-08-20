@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box, Typography, Button, Grid, Card, CardContent, CardMedia,
-  Chip, Container, Pagination, FormGroup, FormControlLabel, Checkbox, Slider, TextField,
-  Select, MenuItem, InputAdornment, IconButton, useTheme, useMediaQuery, Skeleton
+  Chip, Container, Pagination, Select, MenuItem, IconButton, useTheme,
+  useMediaQuery, Skeleton, Divider
 } from '@mui/material';
 import {
-  ShoppingCart, Favorite, FavoriteBorder, Star, Search, Close, Tune, WhatsApp
+  Favorite, FavoriteBorder, Star, Tune, Close, WhatsApp
 } from '@mui/icons-material';
 import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
+import AutoCompleteSearch from '../components/AutoCompleteSearch'; // <-- Make sure the path is correct
 import { useNavigate } from 'react-router-dom';
 
 const FALLBACK_IMAGE = "/fallback.png";
@@ -31,8 +32,8 @@ const ProductListingPage = () => {
   const [filters, setFilters] = useState({
     page: 1,
     limit: 12,
-    category: '', // will be category._id
-    brand: '',    // will be brand._id
+    category: '',
+    brand: '',
     minPrice: 0,
     maxPrice: 500000,
     sort: 'newest',
@@ -66,8 +67,8 @@ const ProductListingPage = () => {
         const response = await API.getProducts({
           page: filters.page,
           limit: filters.limit,
-          category: filters.category, // now _id!
-          brand: filters.brand,       // now _id!
+          category: filters.category,
+          brand: filters.brand,
           minPrice: filters.minPrice,
           maxPrice: filters.maxPrice,
           search: filters.search,
@@ -84,7 +85,6 @@ const ProductListingPage = () => {
     fetchProducts();
   }, [filters]);
 
-  // For CHECKBOX: handle with _id
   const handleCategoryChange = (categoryId) => {
     setFilters(prev => ({
       ...prev,
@@ -169,6 +169,11 @@ const ProductListingPage = () => {
     navigate(`/products/${id}`);
   };
 
+  // Autocomplete handler for search select
+  const handleSearchSelect = (productId) => {
+    navigate(`/products/${productId}`);
+  };
+
   const sliderValue = [
     Number.isFinite(filters.minPrice) ? filters.minPrice : 0,
     Number.isFinite(filters.maxPrice) ? filters.maxPrice : 500000
@@ -249,26 +254,11 @@ const ProductListingPage = () => {
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                 Search
               </Typography>
-              <TextField
-                fullWidth
-                variant="outlined"
+              {/* Autocomplete Search */}
+              <AutoCompleteSearch
+                onSelect={handleSearchSelect}
                 placeholder="Search products..."
-                value={filters.search}
-                onChange={handleSearchChange}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <Search />
-                    </InputAdornment>
-                  ),
-                  endAdornment: filters.search && (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setFilters(prev => ({ ...prev, search: '' }))}>
-                        <Close fontSize="small" />
-                      </IconButton>
-                    </InputAdornment>
-                  )
-                }}
+                sx={{ mb: 2 }}
               />
             </Box>
 
@@ -276,17 +266,18 @@ const ProductListingPage = () => {
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                 Price Range (KES)
               </Typography>
-              <Slider
-                value={sliderValue}
-                onChange={handlePriceChange}
-                valueLabelDisplay="auto"
-                min={0}
-                max={500000}
-                step={1000}
-                valueLabelFormat={formatPrice}
-                sx={{ mx: 2 }}
-              />
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ px: 2 }}>
+                <Slider
+                  value={sliderValue}
+                  onChange={handlePriceChange}
+                  valueLabelDisplay="auto"
+                  min={0}
+                  max={500000}
+                  step={1000}
+                  valueLabelFormat={formatPrice}
+                />
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 2 }}>
                 <Typography variant="body2">{formatPrice(sliderValue[0])}</Typography>
                 <Typography variant="body2">{formatPrice(sliderValue[1])}</Typography>
               </Box>
@@ -350,6 +341,7 @@ const ProductListingPage = () => {
                 Show Results
               </Button>
             )}
+            <Divider sx={{ my: 2 }} />
           </Box>
         )}
 

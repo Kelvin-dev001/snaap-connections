@@ -1,32 +1,18 @@
 import React, { useState } from 'react';
 import {
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Box,
-  IconButton,
-  Avatar,
-  useTheme,
-  useMediaQuery,
-  Slide,
-  Drawer,
-  InputBase,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  Fade
+  AppBar, Toolbar, Typography, Button, Box, IconButton, Avatar,
+  useTheme, useMediaQuery, Slide, Drawer,
+  List, ListItem, ListItemIcon, ListItemText, Divider, Fade,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import SearchIcon from '@mui/icons-material/Search';
 import CategoryIcon from '@mui/icons-material/Category';
 import StarIcon from '@mui/icons-material/Star';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { SiBrandfolder } from "react-icons/si";
+import { useNavigate } from "react-router-dom";
+import AutoCompleteSearch from "./components/AutoCompleteSearch"; // adjust path if needed
 
 const menuSections = [
   { label: "All Products", icon: <StorefrontIcon />, link: "/products" },
@@ -34,14 +20,12 @@ const menuSections = [
   { label: "New Arrivals", icon: <StarIcon />, link: "/new-arrivals" },
   { label: "Best Sellers", icon: <StarIcon />, link: "/best-sellers" },
   { label: "Pocket Friendly", icon: <LocalOfferIcon />, link: "/pocket-friendly" },
-  // Add more sections as needed
 ];
 
 const categories = [
   { label: "Smartphones", icon: <CategoryIcon />, link: "/category/smartphones" },
   { label: "Laptops", icon: <CategoryIcon />, link: "/category/laptops" },
   { label: "Accessories", icon: <CategoryIcon />, link: "/category/accessories" },
-  // Add more categories as needed
 ];
 
 const brands = [
@@ -49,22 +33,26 @@ const brands = [
   { label: "Apple", icon: <SiBrandfolder />, link: "/brand/apple" },
   { label: "Xiaomi", icon: <SiBrandfolder />, link: "/brand/xiaomi" },
   { label: "OPPO", icon: <SiBrandfolder />, link: "/brand/oppo" },
-  // Add more brands as needed
 ];
 
 const MainNavbar = ({ onMenuClick }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [search, setSearch] = useState('');
+  const navigate = useNavigate();
 
   // For animation on hamburger
   const handleMenuClick = () => {
     setDrawerOpen(true);
     if (onMenuClick) onMenuClick();
   };
-
   const handleDrawerClose = () => setDrawerOpen(false);
+
+  // Navigate to product page on search select
+  const handleSearchSelect = (productId) => {
+    navigate(`/products/${productId}`);
+    setDrawerOpen(false);
+  };
 
   return (
     <Slide appear={false} direction="down" in>
@@ -110,26 +98,21 @@ const MainNavbar = ({ onMenuClick }) => {
                 <Button href="/about" variant="text" color="inherit">About</Button>
                 <Button href="/contact" variant="text" color="inherit">Contact</Button>
                 <Box sx={{ ml: 2, minWidth: 220 }}>
-                  <Box sx={{
-                    display: "flex", alignItems: "center", bgcolor: "#f4f6fa",
-                    px: 2, py: 1, borderRadius: "40px", boxShadow: "0 1px 8px #6dd5ed22"
-                  }}>
-                    <SearchIcon color="primary" />
-                    <InputBase
-                      placeholder="Search products, brands, categories..."
-                      sx={{ ml: 2, flex: 1, fontSize: "1.07rem" }}
-                      inputProps={{ 'aria-label': 'search' }}
-                      value={search}
-                      onChange={e => setSearch(e.target.value)}
-                    />
-                  </Box>
+                  {/* Autocomplete Search in Navbar */}
+                  <AutoCompleteSearch
+                    onSelect={handleSearchSelect}
+                    placeholder="Search products, brands, categories..."
+                  />
                 </Box>
               </Box>
             </Fade>
           )}
-          <IconButton href="/cart" color="primary" size="large">
-            <ShoppingCartIcon />
-          </IconButton>
+          {/* Replace cart with search for mobile */}
+          {isMobile && (
+            <IconButton color="primary" size="large" onClick={handleMenuClick}>
+              <SearchIcon />
+            </IconButton>
+          )}
         </Toolbar>
         {/* Hamburger Drawer */}
         <Drawer
@@ -150,20 +133,12 @@ const MainNavbar = ({ onMenuClick }) => {
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Menu
             </Typography>
-            {/* Search inside menu */}
-            <Box sx={{
-              display: "flex", alignItems: "center", bgcolor: "#f7f8fa",
-              px: 2, py: 1, borderRadius: "40px", boxShadow: "0 1px 8px #6dd5ed22", mb: 3
-            }}>
-              <SearchIcon color="primary" />
-              <InputBase
-                placeholder="Quick search..."
-                sx={{ ml: 2, flex: 1, fontSize: "1.07rem" }}
-                inputProps={{ 'aria-label': 'quick search' }}
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </Box>
+            {/* Autocomplete Search in Drawer */}
+            <AutoCompleteSearch
+              onSelect={handleSearchSelect}
+              placeholder="Quick search..."
+              sx={{ mb: 3 }}
+            />
             <Divider sx={{ my: 2 }} />
             <List>
               {menuSections.map(section => (
