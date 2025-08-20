@@ -96,7 +96,7 @@ const HomePage = () => {
       <FeaturedProductsSection products={featuredProducts} />
       <PocketFriendlySection />
       <DealsSection />
-      <NewArrivalsSection products={newArrivals} title="Random Products in Kenya" />
+      <NewArrivalsSection products={newArrivals} title="Hot Selling Smartphones in Kenya" />
       {/* Pass recentReviews to ReviewsSection for homepage carousel */}
       <ReviewsSection reviews={recentReviews} isHomepage />
       <WhyChooseUsSection />
