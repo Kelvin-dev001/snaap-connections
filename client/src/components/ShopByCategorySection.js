@@ -96,11 +96,11 @@ const ShopByCategorySection = () => {
       </Typography>
       <Box className="scroll-row" sx={{ px: { xs: 1, md: 3 }, pb: 1 }}>
         {categories.map((cat, idx) => (
-          <Link
-            to={`/categories/${encodeURIComponent(cat.name)}`}
-            style={{ textDecoration: "none" }}
-            key={cat._id || cat.name}
-          >
+         <Link
+         to={`/products?category=${encodeURIComponent(cat.name)}`}
+         style={{ textDecoration: "none" }}
+         key={cat._id || cat.name}
+       >
             <Card
               className="flip-card"
               elevation={0}

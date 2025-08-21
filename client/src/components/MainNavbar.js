@@ -151,34 +151,34 @@ const MainNavbar = ({ onMenuClick }) => {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Categories</Typography>
             <List>
               {categories.map(cat => (
-                <ListItem
-                  button
-                  key={cat._id || cat.name}
-                  component="a"
-                  href={getCategoryLink(cat)}
-                >
-                  <ListItemIcon>
-                    <CategoryIcon />
-                  </ListItemIcon>
-                  <ListItemText primary={cat.name} />
-                </ListItem>
+             <ListItem
+             button
+             key={cat._id || cat.name}
+             component="a"
+             href={`/products?category=${encodeURIComponent(cat.name)}`}
+           >
+             <ListItemIcon>
+               <CategoryIcon />
+             </ListItemIcon>
+             <ListItemText primary={cat.name} />
+           </ListItem>
               ))}
             </List>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Brands</Typography>
             <List>
               {brands.map(brand => (
-                <ListItem
-                  button
-                  key={brand._id || brand.name}
-                  component="a"
-                  href={getBrandLink(brand)}
-                >
-                  <ListItemIcon>
-                    <SiBrandfolder />
-                  </ListItemIcon>
-                  <ListItemText primary={brand.name} />
-                </ListItem>
+              <ListItem
+              button
+              key={brand._id || brand.name}
+              component="a"
+              href={`/products?brand=${encodeURIComponent(brand.name)}`}
+            >
+              <ListItemIcon>
+                <SiBrandfolder />
+              </ListItemIcon>
+              <ListItemText primary={brand.name} />
+            </ListItem>
               ))}
             </List>
           </Box>

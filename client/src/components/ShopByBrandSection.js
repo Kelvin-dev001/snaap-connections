@@ -97,10 +97,10 @@ const ShopByBrandSection = () => {
       <Box className="brand-scroll-row" sx={{ px: { xs: 1, md: 3 }, pb: 1 }}>
         {brands.map((brand, idx) => (
           <Link
-            to={`/brands/${encodeURIComponent(brand.name)}`}
-            style={{ textDecoration: "none" }}
-            key={brand._id || brand.id || idx}
-          >
+          to={`/products?brand=${encodeURIComponent(brand.name)}`}
+          style={{ textDecoration: "none" }}
+          key={brand._id || brand.id || idx}
+        >
             <Card
               className="flip-card"
               elevation={0}

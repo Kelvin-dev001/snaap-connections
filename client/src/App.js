@@ -21,9 +21,6 @@ import ErrorAlert from './components/ErrorAlert';
 import Login from './pages/admin/Login';
 import RequireAdmin from './components/RequireAdmin'; // <-- Add this import
 
-// --- Newly added brand/category pages ---
-import BrandPage from './pages/BrandPage';
-import CategoryPage from './pages/CategoryPage';
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -75,12 +72,7 @@ function App() {
         <Route path="/" element={<AppLayout />}>
           <Route index element={<HomePage featuredProducts={featuredProducts} />} />
           <Route path="products" element={<ProductListingPage />} />
-          <Route path="products/:id" element={<ProductDetailPage />} />
-
-          {/* --- Brand and Category pages --- */}
-          <Route path="brands/:brandName" element={<BrandPage />} />
-          <Route path="categories/:categoryName" element={<CategoryPage />} />
-
+          <Route path="products/:id" element={<ProductDetailPage />} /> 
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="login" element={<LoginPage />} />
