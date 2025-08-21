@@ -10,10 +10,11 @@ import {
 import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
-import AutoCompleteSearch from '../components/AutoCompleteSearch'; // <-- Make sure the path is correct
-import { useNavigate } from 'react-router-dom';
+import AutoCompleteSearch from '../components/AutoCompleteSearch';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const FALLBACK_IMAGE = "/fallback.png";
+const PRODUCTS_PER_PAGE_OPTIONS = [12, 24, 48, 96, 200, 500, 1000];
 
 const ProductListingPage = () => {
   const theme = useTheme();
@@ -27,16 +28,22 @@ const ProductListingPage = () => {
   const [wishlist, setWishlist] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // Store the _id for category/brand filters
+  // Store the brand/category name from URL for filtering
+  const urlParams = new URLSearchParams(location.search);
+  // Support query string usage: ?brand=Infinix or ?category=Laptops
+  const brandFromQuery = urlParams.get('brand') || '';
+  const categoryFromQuery = urlParams.get('category') || '';
+
   const [filters, setFilters] = useState({
     page: 1,
     limit: 12,
-    category: '',
-    brand: '',
+    category: categoryFromQuery,
+    brand: brandFromQuery,
     minPrice: 0,
     maxPrice: 500000,
-    sort: 'newest',
+    sort: 'random', // default is random
     search: ''
   });
 
@@ -47,6 +54,7 @@ const ProductListingPage = () => {
           API.getCategories(),
           API.getBrands()
         ]);
+        // If your API returns { categories: [...] }
         const cats = categoriesRes.data.categories || categoriesRes.data || [];
         setCategories(Array.isArray(cats) ? cats : []);
         const brs = brandsRes.data.brands || brandsRes.data || [];
@@ -85,17 +93,17 @@ const ProductListingPage = () => {
     fetchProducts();
   }, [filters]);
 
-  const handleCategoryChange = (categoryId) => {
+  const handleCategoryChange = (categoryName) => {
     setFilters(prev => ({
       ...prev,
-      category: prev.category === categoryId ? '' : categoryId,
+      category: prev.category === categoryName ? '' : categoryName,
       page: 1
     }));
   };
-  const handleBrandChange = (brandId) => {
+  const handleBrandChange = (brandName) => {
     setFilters(prev => ({
       ...prev,
-      brand: prev.brand === brandId ? '' : brandId,
+      brand: prev.brand === brandName ? '' : brandName,
       page: 1
     }));
   };
@@ -125,6 +133,14 @@ const ProductListingPage = () => {
     }));
   };
 
+  const handleProductsPerPageChange = (e) => {
+    setFilters(prev => ({
+      ...prev,
+      limit: Number(e.target.value),
+      page: 1
+    }));
+  };
+
   const handlePageChange = (e, value) => {
     setFilters(prev => ({
       ...prev,
@@ -135,12 +151,12 @@ const ProductListingPage = () => {
   const clearFilters = () => {
     setFilters({
       page: 1,
-      limit: 1000,
+      limit: 12,
       category: '',
       brand: '',
       minPrice: 0,
       maxPrice: 500000,
-      sort: 'newest',
+      sort: 'random',
       search: ''
     });
   };
@@ -169,7 +185,6 @@ const ProductListingPage = () => {
     navigate(`/products/${id}`);
   };
 
-  // Autocomplete handler for search select
   const handleSearchSelect = (productId) => {
     navigate(`/products/${productId}`);
   };
@@ -181,21 +196,6 @@ const ProductListingPage = () => {
 
   if (loading && filters.page === 1) {
     return <LoadingSpinner />;
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
-        <ErrorAlert error={error} onClose={() => setError(null)} />
-        <Button
-          variant="contained"
-          onClick={() => window.location.reload()}
-          sx={{ mt: 2 }}
-        >
-          Retry
-        </Button>
-      </Container>
-    );
   }
 
   if (error) {
@@ -252,7 +252,6 @@ const ProductListingPage = () => {
               <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
                 Search
               </Typography>
-              {/* Autocomplete Search */}
               <AutoCompleteSearch
                 onSelect={handleSearchSelect}
                 placeholder="Search products..."
@@ -295,8 +294,8 @@ const ProductListingPage = () => {
                 sx={{ mb: 2 }}
               >
                 <MenuItem value="">All Categories</MenuItem>
-                {categories.map((cat) => (
-                  <MenuItem key={cat._id} value={cat._id}>{cat.name}</MenuItem>
+                {categories.map((cat, idx) => (
+                  <MenuItem key={cat._id || cat.name} value={cat.name}>{cat.name}</MenuItem>
                 ))}
               </Select>
             </Box>
@@ -315,8 +314,8 @@ const ProductListingPage = () => {
                 sx={{ mb: 2 }}
               >
                 <MenuItem value="">All Brands</MenuItem>
-                {brands.map((brand) => (
-                  <MenuItem key={brand._id} value={brand._id}>{brand.name}</MenuItem>
+                {brands.map((brand, idx) => (
+                  <MenuItem key={brand._id || brand.name} value={brand.name}>{brand.name}</MenuItem>
                 ))}
               </Select>
             </Box>
@@ -353,30 +352,43 @@ const ProductListingPage = () => {
           }}>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
               {filters.category
-                ? (categories.find(c => c._id === filters.category)?.name || 'All Products')
-                : 'All Products'}
+                ? filters.category
+                : filters.brand
+                  ? filters.brand
+                  : 'All Products'}
               <Typography variant="body2" color="text.secondary" component="span" sx={{ ml: 1 }}>
                 ({totalProducts} products)
               </Typography>
             </Typography>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {isMobile && (
-                <IconButton onClick={() => setShowFilters(true)}>
-                  <Tune />
-                </IconButton>
-              )}
+              <Select
+                value={filters.limit}
+                onChange={handleProductsPerPageChange}
+                size="small"
+                sx={{ minWidth: 120 }}
+              >
+                {PRODUCTS_PER_PAGE_OPTIONS.map(option => (
+                  <MenuItem key={option} value={option}>{option} / page</MenuItem>
+                ))}
+              </Select>
               <Select
                 value={filters.sort}
                 onChange={handleSortChange}
                 size="small"
                 sx={{ minWidth: 180 }}
               >
+                <MenuItem value="random">Random</MenuItem>
                 <MenuItem value="newest">Newest</MenuItem>
                 <MenuItem value="price-low">Price: Low to High</MenuItem>
                 <MenuItem value="price-high">Price: High to Low</MenuItem>
                 <MenuItem value="popular">Most Popular</MenuItem>
               </Select>
+              {isMobile && (
+                <IconButton onClick={() => setShowFilters(true)}>
+                  <Tune />
+                </IconButton>
+              )}
             </Box>
           </Box>
           {products.length === 0 ? (
@@ -402,7 +414,7 @@ const ProductListingPage = () => {
             <>
               <Grid container spacing={3} columns={12}>
                 {products.map((product) => (
-                  <Grid key={product._id} sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 4', lg: 'span 3' } }}>
+                  <Grid key={product._id || product.id} sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 4', lg: 'span 3' } }}>
                     <Card
                       sx={{
                         height: '100%',
@@ -423,7 +435,7 @@ const ProductListingPage = () => {
                         <CardMedia
                           component="img"
                           height="220"
-                          image={product.thumbnail || product.images?.[0] || FALLBACK_IMAGE}
+                          image={product.thumbnail || (product.images && product.images[0]) || FALLBACK_IMAGE}
                           alt={product.name}
                           sx={{ objectFit: 'contain', p: 1 }}
                         />
@@ -462,7 +474,7 @@ const ProductListingPage = () => {
                       </Box>
                       <CardContent sx={{ flexGrow: 1 }}>
                         <Typography variant="body2" color="text.secondary">
-                          {brands.find(b => b._id === product.brand)?.name || product.brand}
+                          {product.brand}
                         </Typography>
                         <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
                           {product.name}
