@@ -24,20 +24,25 @@ import {
 const bluishGradient =
   'linear-gradient(135deg, #1e3c72 0%, #2a5298 60%, #6dd5ed 100%)';
 
+// Update Shop links—remove brands, categories, and add categories list
+const shopLinks = [
+  { label: 'All Products', href: '/products' },
+  { label: 'Smartphones', href: '/products?category=Smartphones' },
+  { label: 'Laptops', href: '/products?category=Laptops' },
+  { label: 'Earbuds', href: '/products?category=Earbuds' },
+  { label: 'Tablets', href: '/products?category=Tablets' },
+  { label: 'Smart Watches', href: '/products?category=Smart Watches' }
+];
+
 const footerLinks = [
   {
     title: 'Shop',
-    links: [
-      { label: 'All Products', href: '/products' },
-      { label: 'Brands', href: '/brands' },
-      { label: 'Categories', href: '/categories' },
-      { label: 'Deals', href: '/deals' }
-    ]
+    links: shopLinks
   },
   {
     title: 'About',
     links: [
-      { label: 'Our Story', href: '/about' },
+      { label: 'Our Story', href: '/our-story' },
       { label: 'Why Choose Us', href: '/why-us' },
       { label: 'Careers', href: '/careers' }
     ]

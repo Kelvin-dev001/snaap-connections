@@ -5,6 +5,12 @@ import HomePage from './pages/HomePage';
 import ProductListingPage from './pages/ProductListingPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import CartPage from './pages/CartPage';
+import ContactPage from './pages/ContactPage';
+import FAQsPage from './pages/FAQsPage';
+import ReturnsPage from './pages/ReturnsPage';
+import ShippingPage from './pages/ShippingPage';
+import OurStoryPage from './pages/OurStoryPage';
+import CareersPage from './pages/CareersPage';
 import CheckoutPage from './pages/CheckoutPage';
 import LoginPage from './pages/LoginPage';
 import ErrorPage from './pages/ErrorPage';
@@ -22,6 +28,12 @@ const AppRoutes = () => {
         <Route path="products" element={<ProductListingPage />} />
         <Route path="products/:id" element={<ProductDetailPage />} />
         <Route path="cart" element={<CartPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+<Route path="/faqs" element={<FAQsPage />} />
+<Route path="/returns" element={<ReturnsPage />} />
+<Route path="/shipping" element={<ShippingPage />} />
+<Route path="/our-story" element={<OurStoryPage />} />
+<Route path="/careers" element={<CareersPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="login" element={<LoginPage />} />
         <Route path="*" element={<ErrorPage />} />

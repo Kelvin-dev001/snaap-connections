@@ -5,40 +5,36 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import ErrorAlert from "../components/ErrorAlert";
 import ProductListingPage from "./ProductListingPage";
 
-const BrandPage = () => {
-  const { brandName } = useParams();
+const CategoryPage = () => {
+  const { categoryName } = useParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     setLoading(true);
-    API.getProducts({ brand: brandName, limit: 1000 })
+    API.getProducts({ category: categoryName, limit: 1000 })
       .then((res) => {
         setProducts(res.data.products || []);
         setError(null);
       })
       .catch((err) => {
-        setError("Failed to fetch products for this brand.");
+        setError("Failed to fetch products for this category.");
         setProducts([]);
       })
       .finally(() => setLoading(false));
-  }, [brandName]);
+  }, [categoryName]);
 
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorAlert error={error} />;
 
-  // If you want only phones by brand, filter further:
-  // const phones = products.filter(p => p.category && p.category.toLowerCase() === 'smartphones');
-  // Pass phones to ProductListingPage
-
   return (
     <ProductListingPage
       initialProducts={products}
-      title={`Products by ${brandName}`}
-      filterBrand={brandName}
+      title={`Products in ${categoryName}`}
+      filterCategory={categoryName}
     />
   );
 };
 
-export default BrandPage;
+export default CategoryPage;
