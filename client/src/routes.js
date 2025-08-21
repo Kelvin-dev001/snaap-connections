@@ -12,6 +12,8 @@ import Dashboard from './pages/admin/Dashboard';
 import Products from './pages/admin/Products';
 import Orders from './pages/admin/Orders';
 import Customers from './pages/admin/Customers';
+import BrandPage from './pages/BrandPage'; // <-- Added
+import CategoryPage from './pages/CategoryPage'; // <-- Added
 
 const AppRoutes = () => {
   return (
@@ -21,6 +23,8 @@ const AppRoutes = () => {
         <Route index element={<HomePage />} />
         <Route path="products" element={<ProductListingPage />} />
         <Route path="products/:id" element={<ProductDetailPage />} />
+        <Route path="brands/:brandName" element={<BrandPage />} />
+        <Route path="categories/:categoryName" element={<CategoryPage />} />
         <Route path="cart" element={<CartPage />} />
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="login" element={<LoginPage />} />

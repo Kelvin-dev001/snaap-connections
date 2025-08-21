@@ -10,6 +10,7 @@ const ShopByBrandSection = () => {
     let isMounted = true;
     API.getBrands()
       .then((res) => {
+        // Support both array and object response
         const brandArr = res.data?.brands || res.data || [];
         const brandsWithFullLogo = brandArr.map(b => ({
           ...b,
@@ -98,7 +99,7 @@ const ShopByBrandSection = () => {
       <Box className="brand-scroll-row" sx={{ px: { xs: 1, md: 3 }, pb: 1 }}>
         {brands.map((brand, idx) => (
           <Link
-            to={`/products?brand=${encodeURIComponent(brand.name)}`}
+            to={`/brands/${encodeURIComponent(brand.name)}`}
             style={{ textDecoration: "none" }}
             key={brand._id || brand.id || idx}
           >

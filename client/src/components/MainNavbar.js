@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar, Toolbar, Typography, Button, Box, IconButton, Avatar,
   useTheme, useMediaQuery, Slide, Drawer,
@@ -13,6 +13,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import { SiBrandfolder } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
 import AutoCompleteSearch from "./AutoCompleteSearch"; // adjust path if needed
+import API from "../api/apiService"; // <-- Added to fetch brands/categories
 
 const menuSections = [
   { label: "All Products", icon: <StorefrontIcon />, link: "/products" },
@@ -22,24 +23,27 @@ const menuSections = [
   { label: "Pocket Friendly", icon: <LocalOfferIcon />, link: "/pocket-friendly" },
 ];
 
-const categories = [
-  { label: "Smartphones", icon: <CategoryIcon />, link: "/category/smartphones" },
-  { label: "Laptops", icon: <CategoryIcon />, link: "/category/laptops" },
-  { label: "Accessories", icon: <CategoryIcon />, link: "/category/accessories" },
-];
-
-const brands = [
-  { label: "Samsung", icon: <SiBrandfolder />, link: "/brand/samsung" },
-  { label: "Apple", icon: <SiBrandfolder />, link: "/brand/apple" },
-  { label: "Xiaomi", icon: <SiBrandfolder />, link: "/brand/xiaomi" },
-  { label: "OPPO", icon: <SiBrandfolder />, link: "/brand/oppo" },
-];
-
 const MainNavbar = ({ onMenuClick }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Fetch brands and categories dynamically from API
+  const [brands, setBrands] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    API.getBrands().then(res => {
+      // Support both array and object response
+      const brandArr = res.data?.brands || res.data || [];
+      setBrands(brandArr);
+    });
+    API.getCategories().then(res => {
+      const catArr = res.data?.categories || res.data || [];
+      setCategories(catArr);
+    });
+  }, []);
 
   // For animation on hamburger
   const handleMenuClick = () => {
@@ -53,6 +57,12 @@ const MainNavbar = ({ onMenuClick }) => {
     navigate(`/products/${productId}`);
     setDrawerOpen(false);
   };
+
+  // Helper for category/brand menu links
+  const getCategoryLink = (cat) =>
+    `/categories/${encodeURIComponent(cat.name)}`;
+  const getBrandLink = (brand) =>
+    `/brands/${encodeURIComponent(brand.name)}`;
 
   return (
     <Slide appear={false} direction="down" in>
@@ -152,9 +162,16 @@ const MainNavbar = ({ onMenuClick }) => {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Categories</Typography>
             <List>
               {categories.map(cat => (
-                <ListItem button key={cat.label} component="a" href={cat.link}>
-                  <ListItemIcon>{cat.icon}</ListItemIcon>
-                  <ListItemText primary={cat.label} />
+                <ListItem
+                  button
+                  key={cat._id || cat.name}
+                  component="a"
+                  href={getCategoryLink(cat)}
+                >
+                  <ListItemIcon>
+                    <CategoryIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={cat.name} />
                 </ListItem>
               ))}
             </List>
@@ -162,9 +179,16 @@ const MainNavbar = ({ onMenuClick }) => {
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Brands</Typography>
             <List>
               {brands.map(brand => (
-                <ListItem button key={brand.label} component="a" href={brand.link}>
-                  <ListItemIcon>{brand.icon}</ListItemIcon>
-                  <ListItemText primary={brand.label} />
+                <ListItem
+                  button
+                  key={brand._id || brand.name}
+                  component="a"
+                  href={getBrandLink(brand)}
+                >
+                  <ListItemIcon>
+                    <SiBrandfolder />
+                  </ListItemIcon>
+                  <ListItemText primary={brand.name} />
                 </ListItem>
               ))}
             </List>
