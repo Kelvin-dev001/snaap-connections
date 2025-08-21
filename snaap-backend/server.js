@@ -4,9 +4,9 @@ const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 
-// ... your other routes & imports
+// --- ROUTE IMPORTS ---
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const adminRoutes = require('./routes/adminRoutes');
@@ -20,6 +20,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'https://snaap-connections.vercel.app'
 ];
+
 app.use(cors({
   origin: allowedOrigins,
   credentials: true
@@ -34,7 +35,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- MongoDB connection ---
+// --- MONGODB CONNECTION ---
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.error('MongoDB Error:', err));
@@ -48,14 +49,20 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', reviewRoutes);
 
-// --- AI Product Advisor Route ---
-const openai = new OpenAIApi(new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
-}));
+// --- HEALTH CHECK ROUTE ---
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK' });
+});
+
+// --- OPENAI PRODUCT ADVISOR BOT ROUTE ---
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
 app.post('/api/product-bot', async (req, res) => {
   const { message } = req.body;
   try {
-    const response = await openai.createChatCompletion({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
         {
@@ -68,21 +75,18 @@ app.post('/api/product-bot', async (req, res) => {
       max_tokens: 600,
       temperature: 0.8
     });
-    res.json({ reply: response.data.choices[0].message.content });
+    res.json({ reply: response.choices[0].message.content });
   } catch (err) {
-    console.error('OpenAI Error:', err);
+    console.error('OpenAI Error:', err?.response?.data || err);
     res.status(500).json({ error: "Failed to fetch from OpenAI" });
   }
 });
 
-// --- Health Check Route ---
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK' });
-});
-
-// --- PORT configuration ---
+// --- PORT CONFIGURATION ---
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Export for testing (optional)
 module.exports = app;
