@@ -12,7 +12,6 @@ import {
 import { SiTiktok } from "react-icons/si";
 import {
   Facebook,
-  TikTok,
   Instagram,
   WhatsApp,
   LocationOn,
@@ -20,11 +19,9 @@ import {
   Phone
 } from '@mui/icons-material';
 
-// Bluish gradient for background
 const bluishGradient =
   'linear-gradient(135deg, #1e3c72 0%, #2a5298 60%, #6dd5ed 100%)';
 
-// Update Shop links—remove brands, categories, and add categories list
 const shopLinks = [
   { label: 'All Products', href: '/products' },
   { label: 'Smartphones', href: '/products?category=Smartphones' },
@@ -65,7 +62,6 @@ const socialLinks = [
   { icon: <WhatsApp />, href: 'https://wa.me/254722800278', label: 'WhatsApp' }
 ];
 
-// Keyframes for bluish animated gradient
 const animatedGradientStyle = {
   background: bluishGradient,
   backgroundSize: '200% 200%',
@@ -91,7 +87,6 @@ const animatedGradientKeyframes = `
   }
 }
 
-/* Animated Wave Keyframes */
 @keyframes waveAnimation {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -104,7 +99,7 @@ const AnimatedWaveDivider = () => (
       position: 'relative',
       width: '100%',
       height: 70,
-      marginTop: '-1px', // eliminate any gap
+      marginTop: '-1px',
       overflow: 'hidden',
       background: 'transparent'
     }}
@@ -176,7 +171,6 @@ const AnimatedWaveDivider = () => (
 
 const Footer = () => (
   <>
-    {/* Inject the animated gradient & wave CSS keyframes only once */}
     <style>{animatedGradientKeyframes}</style>
     <AnimatedWaveDivider />
     <Box
@@ -192,11 +186,10 @@ const Footer = () => (
     >
       <Container maxWidth="xl">
         <Grid container spacing={6} justifyContent="space-between">
-          {/* Company Info */}
           <Grid item xs={12} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <img
-                 src="/snaap-logo.jpeg"
+                src="/snaap-logo.jpeg"
                 alt="Snaap Connections"
                 width={48}
                 height={48}
@@ -239,8 +232,6 @@ const Footer = () => (
               ))}
             </Stack>
           </Grid>
-
-          {/* Footer Navigation */}
           {footerLinks.map(section => (
             <Grid item xs={12} sm={4} md={2.5} key={section.title}>
               <Typography variant="subtitle1" fontWeight={700} sx={{
@@ -276,8 +267,6 @@ const Footer = () => (
               </Stack>
             </Grid>
           ))}
-
-          {/* Contact */}
           <Grid item xs={12} md={3}>
             <Typography variant="subtitle1" fontWeight={700}
               sx={{ color: '#c4e0fc', letterSpacing: '1.1px', mb: 1.5 }}>

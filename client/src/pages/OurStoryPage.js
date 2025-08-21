@@ -1,40 +1,36 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import API from "../api/apiService";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorAlert from "../components/ErrorAlert";
-import ProductListingPage from "./ProductListingPage";
+import React from 'react';
+import { Container, Typography, Box, Avatar, Stack } from '@mui/material';
 
-const CategoryPage = () => {
-  const { categoryName } = useParams();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const OurStoryPage = () => (
+  <Container maxWidth="md" sx={{ py: 8 }}>
+    <Stack alignItems="center" mb={4}>
+      <Avatar src="/snaap-logo.jpeg" sx={{ width: 80, height: 80, mb: 2 }} />
+      <Typography variant="h4" fontWeight={800} color="primary.main">
+        Our Story
+      </Typography>
+    </Stack>
+    <Typography variant="body1" color="text.secondary" mb={2}>
+      Snaap Connections was founded in 2018 in Mombasa, Kenya, born out of a passion for making technology affordable, accessible, and enjoyable for all. Our founder—a tech enthusiast and entrepreneur—dreamed of a store where everyone could find the latest gadgets, honest advice, and real customer care.
+    </Typography>
+    <Typography variant="body1" color="text.secondary" mb={2}>
+      Over the years, we've grown from a small retail outlet to an online-first destination for smartphones, laptops, wearables, and more. We’re proud to serve thousands of customers across Kenya, delivering not just products, but trust and reliability.
+    </Typography>
+    <Typography variant="body1" color="text.secondary" mb={2}>
+      Our mission is simple: empower Kenyans with authentic tech, unbeatable deals, and support whenever you need it.
+    </Typography>
+    <Box mt={4}>
+      <Typography variant="h6" fontWeight={700} mb={1}>
+        Why Choose Snaap Connections?
+      </Typography>
+      <Typography>
+        - Authentic products, directly sourced from top brands.<br />
+        - Transparent pricing with no hidden charges.<br />
+        - Friendly, knowledgeable support team.<br />
+        - Fast delivery nationwide.<br />
+        - Community-focused: we regularly sponsor local tech initiatives.
+      </Typography>
+    </Box>
+  </Container>
+);
 
-  useEffect(() => {
-    setLoading(true);
-    API.getProducts({ category: categoryName, limit: 1000 })
-      .then((res) => {
-        setProducts(res.data.products || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError("Failed to fetch products for this category.");
-        setProducts([]);
-      })
-      .finally(() => setLoading(false));
-  }, [categoryName]);
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorAlert error={error} />;
-
-  return (
-    <ProductListingPage
-      initialProducts={products}
-      title={`Products in ${categoryName}`}
-      filterCategory={categoryName}
-    />
-  );
-};
-
-export default CategoryPage;
+export default OurStoryPage;

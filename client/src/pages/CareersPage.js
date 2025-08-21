@@ -1,40 +1,53 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import API from "../api/apiService";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorAlert from "../components/ErrorAlert";
-import ProductListingPage from "./ProductListingPage";
+import React from 'react';
+import { Container, Typography, Box, Stack, Button } from '@mui/material';
 
-const CategoryPage = () => {
-  const { categoryName } = useParams();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const CareersPage = () => (
+  <Container maxWidth="md" sx={{ py: 8 }}>
+    <Typography variant="h4" fontWeight={800} mb={2} color="primary.main">
+      Careers at Snaap Connections
+    </Typography>
+    <Typography variant="body1" mb={4} color="text.secondary">
+      Join Kenya’s leading tech retail team! We’re always looking for energetic, passionate people to help us grow and serve our customers better.
+    </Typography>
+    <Box mb={4}>
+      <Typography variant="h6" fontWeight={700} mb={1}>Current Openings:</Typography>
+      <Typography>
+        - Sales & Customer Experience<br />
+        - Content Creator (Social Media, Blog)<br />
+        - Logistics & Delivery<br />
+        - Tech Support
+      </Typography>
+    </Box>
+    <Box mb={4}>
+      <Typography variant="h6" fontWeight={700} mb={1}>Why Work With Us?</Typography>
+      <Typography>
+        - Modern, friendly work environment<br />
+        - Opportunities for career growth<br />
+        - Staff discounts and perks<br />
+        - Training and mentorship
+      </Typography>
+    </Box>
+    <Stack direction="row" spacing={2} mt={2}>
+      <Button
+        component="a"
+        href="mailto:info@snaapconnections.com?subject=Job Application"
+        variant="contained"
+        color="primary"
+        size="large"
+      >
+        Apply Now
+      </Button>
+      <Button
+        component="a"
+        href="/contact"
+        variant="outlined"
+        color="primary"
+        size="large"
+      >
+        Contact HR
+      </Button>
+    </Stack>
+  </Container>
+);
 
-  useEffect(() => {
-    setLoading(true);
-    API.getProducts({ category: categoryName, limit: 1000 })
-      .then((res) => {
-        setProducts(res.data.products || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError("Failed to fetch products for this category.");
-        setProducts([]);
-      })
-      .finally(() => setLoading(false));
-  }, [categoryName]);
-
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorAlert error={error} />;
-
-  return (
-    <ProductListingPage
-      initialProducts={products}
-      title={`Products in ${categoryName}`}
-      filterCategory={categoryName}
-    />
-  );
-};
-
-export default CategoryPage;
+export default CareersPage;

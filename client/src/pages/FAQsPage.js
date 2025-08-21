@@ -1,40 +1,46 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import API from "../api/apiService";
-import LoadingSpinner from "../components/LoadingSpinner";
-import ErrorAlert from "../components/ErrorAlert";
-import ProductListingPage from "./ProductListingPage";
+import React from 'react';
+import { Container, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-const CategoryPage = () => {
-  const { categoryName } = useParams();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const faqs = [
+  {
+    question: "How do I place an order?",
+    answer: "Browse products, add items to your cart, and follow checkout instructions. For help, contact us via WhatsApp or phone."
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer: "We accept MPesa, credit/debit cards, and cash on delivery in select areas."
+  },
+  {
+    question: "How long does delivery take?",
+    answer: "Delivery in Mombasa is same-day. Other locations across Kenya typically take 1-3 business days."
+  },
+  {
+    question: "Can I return or exchange a product?",
+    answer: "Yes! See our Returns Policy for details. Contact us within 7 days of delivery for assistance."
+  },
+  {
+    question: "Do you offer warranty?",
+    answer: "Most products come with official manufacturer warranty. For specific warranty info, check the product details."
+  },
+];
 
-  useEffect(() => {
-    setLoading(true);
-    API.getProducts({ category: categoryName, limit: 1000 })
-      .then((res) => {
-        setProducts(res.data.products || []);
-        setError(null);
-      })
-      .catch((err) => {
-        setError("Failed to fetch products for this category.");
-        setProducts([]);
-      })
-      .finally(() => setLoading(false));
-  }, [categoryName]);
+const FAQsPage = () => (
+  <Container maxWidth="md" sx={{ py: 8 }}>
+    <Typography variant="h4" fontWeight={800} mb={3} color="primary.main">
+      Frequently Asked Questions
+    </Typography>
+    {faqs.map((faq, idx) => (
+      <Accordion key={idx} sx={{ mb: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography fontWeight={600}>{faq.question}</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography color="text.secondary">{faq.answer}</Typography>
+        </AccordionDetails>
+      </Accordion>
+    ))}
+  </Container>
+);
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <ErrorAlert error={error} />;
-
-  return (
-    <ProductListingPage
-      initialProducts={products}
-      title={`Products in ${categoryName}`}
-      filterCategory={categoryName}
-    />
-  );
-};
-
-export default CategoryPage;
+export default FAQsPage;
