@@ -66,13 +66,15 @@ function extractArray(field, body) {
 }
 
 // GET ALL PRODUCTS (client)
+// GET ALL PRODUCTS (client)
 router.get('/', async (req, res) => {
   try {
-    const { category, brand, featured, limit, minPrice, maxPrice, search, dealType } = req.query;
+    const { category, brand, featured, limit, minPrice, maxPrice, search, dealType, sort, page = 1 } = req.query;
     const query = {};
-    
-    if (category) query.category = category;
-    if (brand) query.brand = brand;
+
+    // Filter by brand/category **name** (case-insensitive)
+    if (brand) query.brand = { $regex: `^${brand}$`, $options: 'i' };
+    if (category) query.category = { $regex: `^${category}$`, $options: 'i' };
     if (featured) query.isFeatured = true;
     if (dealType) query.dealType = dealType;
     if (minPrice || maxPrice) {
@@ -88,26 +90,30 @@ router.get('/', async (req, res) => {
       ];
     }
 
-    const { sort } = req.query;
-let products;
+    let products;
+    let sortOption = {};
+    const limitNum = parseInt(limit) || 12;
 
-if (sort === 'random') {
-  // Use aggregation pipeline to get random products
-  products = await Product.aggregate([
-    { $match: query },
-    { $sample: { size: parseInt(limit) || 1000 } }
-  ]);
-} else {
-  // Default sort
-  products = await Product.find(query)
-    .limit(parseInt(limit) || 1000)
-    .sort({ createdAt: -1 });
-}
+    // --- RANDOM as default sort ---
+    if (!sort || sort === 'random') {
+      products = await Product.aggregate([
+        { $match: query },
+        { $sample: { size: limitNum } }
+      ]);
+    } else {
+      if (sort === 'price-low' || sort === 'price_asc') sortOption.price = 1;
+      if (sort === 'price-high' || sort === 'price_desc') sortOption.price = -1;
+      if (Object.keys(sortOption).length === 0) sortOption.createdAt = -1; // fallback to newest if known sort
+      products = await Product.find(query)
+        .limit(limitNum)
+        .skip((parseInt(page) - 1) * limitNum)
+        .sort(sortOption);
+    }
 
-    res.json({ 
-      success: true, 
-      count: products.length, 
-      products: products.map(prod => prod.toObject())
+    res.json({
+      success: true,
+      count: products.length,
+      products: Array.isArray(products) ? products.map(prod => prod) : []
     });
   } catch (err) {
     console.error('Error fetching products:', err);
