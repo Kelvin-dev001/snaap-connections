@@ -17,10 +17,10 @@ import API from "../api/apiService";
 
 const menuSections = [
   { label: "All Products", icon: <StorefrontIcon />, link: "/products" },
-  { label: "Deals", icon: <LocalOfferIcon />, link: "/deals" },
-  { label: "New Arrivals", icon: <StarIcon />, link: "/new-arrivals" },
-  { label: "Best Sellers", icon: <StarIcon />, link: "/best-sellers" },
-  { label: "Pocket Friendly", icon: <LocalOfferIcon />, link: "/pocket-friendly" },
+  { label: "Deals", icon: <LocalOfferIcon />, link: "/products?dealType=deal" },
+  { label: "New Arrivals", icon: <StarIcon />, link: "/products?sort=newest" },
+  { label: "Best Sellers", icon: <StarIcon />, link: "/products?sort=popular" },
+  { label: "Pocket Friendly", icon: <LocalOfferIcon />, link: "/products?sort=price-low&maxPrice=15000" },
 ];
 
 const MainNavbar = ({ onMenuClick }) => {
@@ -140,13 +140,13 @@ const MainNavbar = ({ onMenuClick }) => {
             />
             <Divider sx={{ my: 2 }} />
             <List>
-              {menuSections.map(section => (
-                <ListItem button key={section.label} component="a" href={section.link}>
-                  <ListItemIcon>{section.icon}</ListItemIcon>
-                  <ListItemText primary={section.label} />
-                </ListItem>
-              ))}
-            </List>
+  {menuSections.map(section => (
+    <ListItem button key={section.label} component="a" href={section.link}>
+      <ListItemIcon>{section.icon}</ListItemIcon>
+      <ListItemText primary={section.label} />
+    </ListItem>
+  ))}
+</List>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Categories</Typography>
             <List>
