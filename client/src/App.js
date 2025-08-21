@@ -23,6 +23,7 @@ import Customers from './pages/admin/Customers';
 import CategoryList from './pages/admin/CategoryList';
 import BrandList from './pages/admin/BrandList';
 import LoadingSpinner from './components/LoadingSpinner';
+import ProductAdvisorBot from "./components/ProductAdvisorBot";
 import ErrorAlert from './components/ErrorAlert';
 import Login from './pages/admin/Login';
 import RequireAdmin from './components/RequireAdmin'; // <-- Add this import
@@ -89,6 +90,7 @@ function App() {
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="*" element={<ErrorPage />} />
+          <ProductAdvisorBot />
         </Route>
 
         {/* Admin Login */}
