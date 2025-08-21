@@ -139,10 +139,28 @@ const MainNavbar = ({ onMenuClick }) => {
             }
           }}
         >
-          <Box sx={{ p: 3 }}>
-            {/* Add a close button at the top right */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-              <IconButton onClick={handleDrawerClose} aria-label="Close menu" size="large">
+          <Box sx={{ p: 3, pt: isMobile ? 4 : 3 }}>
+            {/* Close button is pushed down for mobile */}
+            <Box sx={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              mb: 1,
+              mt: isMobile ? 2.5 : 0,
+              position: isMobile ? 'relative' : 'static',
+              zIndex: 10
+            }}>
+              <IconButton
+                onClick={handleDrawerClose}
+                aria-label="Close menu"
+                size="large"
+                sx={{
+                  bgcolor: "background.paper",
+                  boxShadow: 1,
+                  borderRadius: 2,
+                  top: isMobile ? 0 : undefined,
+                  right: isMobile ? 0 : undefined,
+                }}
+              >
                 <CloseIcon fontSize="large" />
               </IconButton>
             </Box>
