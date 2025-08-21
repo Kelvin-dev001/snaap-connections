@@ -60,49 +60,49 @@ const banners = [
     title: "Upgrade to 5G Today",
     subtitle: "Experience blazing-fast internet on our hottest 5G phones.",
     cta: "Explore 5G Phones",
-    ctaLink: "/products?network=5G",
+    ctaLink: "/products",
   },
   {
     image: "/assets/banner3.jpg",
     title: "Smart, Stylish, Connected!",
     subtitle: "Explore wearables that match your lifestyle — fitness, fashion, and function.",
     cta: "Shop Wearables",
-    ctaLink: "/trade-in",
+    ctaLink: "/products",
   },
   {
     image: "/assets/banner5.jpg",
     title: "Stay Connected, Stay Ahead!",
     subtitle: "Explore smart devices designed for your lifestyle",
     cta: "Discover more",
-    ctaLink: "/trade-in",
+    ctaLink: "/products",
   },
   {
     image: "/assets/banner6.jpg",
     title: "Discover the Newest Tech!",
     subtitle: "Shop smartphones, laptops, earbuds & wearables — all in one place.",
     cta: "View Collection",
-    ctaLink: "/trade-in",
+    ctaLink: "/products",
   },
   {
     image: "/assets/banner4.jpg",
     title: "Work Hard. Play Harder.",
     subtitle: "Best deals on phones that keep up with your hustle.",
     cta: "Explore Performance",
-    ctaLink: "/trade-in",
+    ctaLink: "/products",
   },
   {
     image: "/assets/banner7.jpg",
     title: "Gear Up for Success",
     subtitle: "Essential and affordable laptops for work and school ",
     cta: "Explore Deals",
-    ctaLink: "/trade-in",
+    ctaLink: "/products",
   },
   {
     image: "/assets/banner8.jpg",
     title: "Your One-Stop Gadget Shop",
     subtitle: "one click online shopping. Saving you time and money.",
     cta: "Browse Now",
-    ctaLink: "/trade-in",
+    ctaLink: "/products",
   },
 ];
 
@@ -233,7 +233,7 @@ const HeroBannerSlider = () => {
                 <Button
                   variant="contained"
                   size="small"
-                  href={banner.ctaLink}
+                  href="/products"
                   sx={{
                     fontWeight: 700,
                     fontSize: "0.95rem",
