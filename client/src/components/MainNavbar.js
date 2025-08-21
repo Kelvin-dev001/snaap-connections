@@ -12,8 +12,8 @@ import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import { SiBrandfolder } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
-import AutoCompleteSearch from "./AutoCompleteSearch"; // adjust path if needed
-import API from "../api/apiService"; // <-- Added to fetch brands/categories
+import AutoCompleteSearch from "./AutoCompleteSearch";
+import API from "../api/apiService";
 
 const menuSections = [
   { label: "All Products", icon: <StorefrontIcon />, link: "/products" },
@@ -29,13 +29,11 @@ const MainNavbar = ({ onMenuClick }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Fetch brands and categories dynamically from API
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     API.getBrands().then(res => {
-      // Support both array and object response
       const brandArr = res.data?.brands || res.data || [];
       setBrands(brandArr);
     });
@@ -45,24 +43,19 @@ const MainNavbar = ({ onMenuClick }) => {
     });
   }, []);
 
-  // For animation on hamburger
   const handleMenuClick = () => {
     setDrawerOpen(true);
     if (onMenuClick) onMenuClick();
   };
   const handleDrawerClose = () => setDrawerOpen(false);
 
-  // Navigate to product page on search select
   const handleSearchSelect = (productId) => {
     navigate(`/products/${productId}`);
     setDrawerOpen(false);
   };
 
-  // Helper for category/brand menu links
-  const getCategoryLink = (cat) =>
-    `/categories/${encodeURIComponent(cat.name)}`;
-  const getBrandLink = (brand) =>
-    `/brands/${encodeURIComponent(brand.name)}`;
+  const getCategoryLink = (cat) => `/categories/${encodeURIComponent(cat.name)}`;
+  const getBrandLink = (brand) => `/brands/${encodeURIComponent(brand.name)}`;
 
   return (
     <Slide appear={false} direction="down" in>
@@ -108,7 +101,6 @@ const MainNavbar = ({ onMenuClick }) => {
                 <Button href="/about" variant="text" color="inherit">About</Button>
                 <Button href="/contact" variant="text" color="inherit">Contact</Button>
                 <Box sx={{ ml: 2, minWidth: 220 }}>
-                  {/* Autocomplete Search in Navbar */}
                   <AutoCompleteSearch
                     onSelect={handleSearchSelect}
                     placeholder="Search products, brands, categories..."
@@ -117,14 +109,12 @@ const MainNavbar = ({ onMenuClick }) => {
               </Box>
             </Fade>
           )}
-          {/* Replace cart with search for mobile */}
           {isMobile && (
             <IconButton color="primary" size="large" onClick={handleMenuClick}>
               <SearchIcon />
             </IconButton>
           )}
         </Toolbar>
-        {/* Hamburger Drawer */}
         <Drawer
           anchor={isMobile ? "right" : "top"}
           open={drawerOpen}
@@ -143,7 +133,6 @@ const MainNavbar = ({ onMenuClick }) => {
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Menu
             </Typography>
-            {/* Autocomplete Search in Drawer */}
             <AutoCompleteSearch
               onSelect={handleSearchSelect}
               placeholder="Quick search..."

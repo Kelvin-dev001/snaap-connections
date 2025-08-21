@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Card, CardActionArea, Avatar } from "@mui/material";
-import { Link } from "react-router-dom";
-import API from "../api/apiService"; // Adjust the import path if needed
+import { Link, useNavigate } from "react-router-dom";
+import API from "../api/apiService";
 
 const ShopByBrandSection = () => {
   const [brands, setBrands] = useState([]);
@@ -10,7 +10,6 @@ const ShopByBrandSection = () => {
     let isMounted = true;
     API.getBrands()
       .then((res) => {
-        // Support both array and object response
         const brandArr = res.data?.brands || res.data || [];
         const brandsWithFullLogo = brandArr.map(b => ({
           ...b,
@@ -32,7 +31,6 @@ const ShopByBrandSection = () => {
           display: flex;
           flex-direction: row;
           overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
           gap: 18px;
           scrollbar-width: thin;
         }

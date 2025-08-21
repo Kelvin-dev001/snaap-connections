@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Card, CardActionArea } from "@mui/material";
 import { Link } from "react-router-dom";
-import API from "../api/apiService"; // Adjust path if needed
+import API from "../api/apiService";
 
 const ShopByCategorySection = () => {
   const [categories, setCategories] = useState([]);
@@ -31,7 +31,6 @@ const ShopByCategorySection = () => {
           display: flex;
           flex-direction: row;
           overflow-x: auto;
-          -webkit-overflow-scrolling: touch;
           gap: 18px;
           scrollbar-width: thin;
         }

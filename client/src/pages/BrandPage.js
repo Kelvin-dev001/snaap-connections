@@ -28,7 +28,10 @@ const BrandPage = () => {
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorAlert error={error} />;
 
-  // Reuse ProductListingPage's product grid
+  // If you want only phones by brand, filter further:
+  // const phones = products.filter(p => p.category && p.category.toLowerCase() === 'smartphones');
+  // Pass phones to ProductListingPage
+
   return (
     <ProductListingPage
       initialProducts={products}
