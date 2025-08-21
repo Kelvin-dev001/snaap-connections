@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Card, CardActionArea, Avatar } from "@mui/material";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import API from "../api/apiService";
+import Marquee from "react-fast-marquee";
+
+// Install react-fast-marquee with: npm install react-fast-marquee
 
 const ShopByBrandSection = () => {
   const [brands, setBrands] = useState([]);
@@ -27,21 +30,6 @@ const ShopByBrandSection = () => {
     <Box sx={{ py: { xs: 6, md: 10 }, bgcolor: "background.default" }}>
       <style>
         {`
-        .brand-scroll-row {
-          display: flex;
-          flex-direction: row;
-          overflow-x: auto;
-          gap: 18px;
-          scrollbar-width: thin;
-        }
-        .brand-scroll-row::-webkit-scrollbar {
-          height: 8px;
-          background: #f5f7fa;
-        }
-        .brand-scroll-row::-webkit-scrollbar-thumb {
-          background: #ddd;
-          border-radius: 4px;
-        }
         .flip-card {
           perspective: 900px;
           min-width: 120px;
@@ -94,112 +82,119 @@ const ShopByBrandSection = () => {
       >
         Shop Top Brands
       </Typography>
-      <Box className="brand-scroll-row" sx={{ px: { xs: 1, md: 3 }, pb: 1 }}>
-        {brands.map((brand, idx) => (
-          <Link
-          to={`/products?brand=${encodeURIComponent(brand.name)}`}
-          style={{ textDecoration: "none" }}
-          key={brand._id || brand.id || idx}
-        >
-            <Card
-              className="flip-card"
-              elevation={0}
-              sx={{
-                borderRadius: "20px",
-                background: "#fff",
-                color: "primary.main",
-                boxShadow: "0 4px 24px 0 rgba(30,60,114,0.08)",
-                transition: "transform 0.35s cubic-bezier(.4,2,.4,1), box-shadow 0.25s",
-                cursor: "pointer",
-                position: "relative",
-                overflow: "visible",
-                border: "none",
-                minHeight: 160,
-                minWidth: 120,
-                maxWidth: 140,
-                "&:hover": {
-                  boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
-                  zIndex: 2
-                }
-              }}
-              tabIndex={0}
+      <Marquee
+        gradient={false}
+        speed={40}
+        pauseOnHover={true}
+        style={{ paddingBottom: 16 }}
+      >
+        <Box sx={{ display: 'flex', gap: '18px', px: { xs: 1, md: 3 } }}>
+          {brands.map((brand, idx) => (
+            <Link
+              to={`/products?brand=${encodeURIComponent(brand.name)}`}
+              style={{ textDecoration: "none" }}
+              key={brand._id || brand.id || idx}
             >
-              <CardActionArea
+              <Card
+                className="flip-card"
+                elevation={0}
                 sx={{
                   borderRadius: "20px",
+                  background: "#fff",
+                  color: "primary.main",
+                  boxShadow: "0 4px 24px 0 rgba(30,60,114,0.08)",
+                  transition: "transform 0.35s cubic-bezier(.4,2,.4,1), box-shadow 0.25s",
+                  cursor: "pointer",
+                  position: "relative",
+                  overflow: "visible",
+                  border: "none",
                   minHeight: 160,
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  p: 3,
-                  bgcolor: "transparent",
-                  "&:focus-visible": { outline: "none" }
+                  minWidth: 120,
+                  maxWidth: 140,
+                  "&:hover": {
+                    boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
+                    zIndex: 2
+                  }
                 }}
+                tabIndex={0}
               >
-                <Box className="flip-card-inner" sx={{ width: "100%", height: "100%", minHeight: 90 }}>
-                  {/* Front Face */}
-                  <Box className="flip-card-front">
-                    {brand.logo ? (
-                      <Avatar
-                        src={brand.logo}
-                        alt={brand.name}
-                        variant="square"
+                <CardActionArea
+                  sx={{
+                    borderRadius: "20px",
+                    minHeight: 160,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    p: 3,
+                    bgcolor: "transparent",
+                    "&:focus-visible": { outline: "none" }
+                  }}
+                >
+                  <Box className="flip-card-inner" sx={{ width: "100%", height: "100%", minHeight: 90 }}>
+                    {/* Front Face */}
+                    <Box className="flip-card-front">
+                      {brand.logo ? (
+                        <Avatar
+                          src={brand.logo}
+                          alt={brand.name}
+                          variant="square"
+                          sx={{
+                            width: 54,
+                            height: 54,
+                            mb: 1.5,
+                            bgcolor: "#fff",
+                            boxShadow: "none",
+                            objectFit: "contain"
+                          }}
+                        />
+                      ) : (
+                        <Avatar
+                          variant="square"
+                          sx={{
+                            width: 54,
+                            height: 54,
+                            mb: 1.5,
+                            bgcolor: "#fff",
+                          }}
+                        >
+                          {brand.name?.charAt(0) || "?"}
+                        </Avatar>
+                      )}
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight={700}
                         sx={{
-                          width: 54,
-                          height: 54,
-                          mb: 1.5,
-                          bgcolor: "#fff",
-                          boxShadow: "none",
-                          objectFit: "contain"
-                        }}
-                      />
-                    ) : (
-                      <Avatar
-                        variant="square"
-                        sx={{
-                          width: 54,
-                          height: 54,
-                          mb: 1.5,
-                          bgcolor: "#fff",
+                          color: "primary.dark",
+                          letterSpacing: 0.8,
+                          fontSize: "1rem",
+                          textAlign: "center",
+                          textShadow: "none",
                         }}
                       >
-                        {brand.name?.charAt(0) || "?"}
-                      </Avatar>
-                    )}
-                    <Typography
-                      variant="subtitle2"
-                      fontWeight={700}
-                      sx={{
-                        color: "primary.dark",
-                        letterSpacing: 0.8,
-                        fontSize: "1rem",
-                        textAlign: "center",
-                        textShadow: "none",
-                      }}
-                    >
-                      {brand.name}
-                    </Typography>
+                        {brand.name}
+                      </Typography>
+                    </Box>
+                    {/* Back Face */}
+                    <Box className="flip-card-back">
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={700}
+                        sx={{
+                          fontSize: "1.10rem",
+                          letterSpacing: ".4px",
+                          textAlign: "center"
+                        }}
+                      >
+                        Shop {brand.name}
+                      </Typography>
+                    </Box>
                   </Box>
-                  {/* Back Face */}
-                  <Box className="flip-card-back">
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={700}
-                      sx={{
-                        fontSize: "1.10rem",
-                        letterSpacing: ".4px",
-                        textAlign: "center"
-                      }}
-                    >
-                      Shop {brand.name}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardActionArea>
-            </Card>
-          </Link>
-        ))}
-      </Box>
+                </CardActionArea>
+              </Card>
+            </Link>
+          ))}
+        </Box>
+      </Marquee>
     </Box>
   );
 };
