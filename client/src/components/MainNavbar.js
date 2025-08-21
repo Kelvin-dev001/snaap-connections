@@ -10,6 +10,7 @@ import CategoryIcon from '@mui/icons-material/Category';
 import StarIcon from '@mui/icons-material/Star';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import CloseIcon from '@mui/icons-material/Close';
 import { SiBrandfolder } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
 import AutoCompleteSearch from "./AutoCompleteSearch";
@@ -43,19 +44,27 @@ const MainNavbar = ({ onMenuClick }) => {
     });
   }, []);
 
+  // Hamburger open/close
   const handleMenuClick = () => {
     setDrawerOpen(true);
     if (onMenuClick) onMenuClick();
   };
   const handleDrawerClose = () => setDrawerOpen(false);
 
+  // Close drawer when a menu link is clicked
+  const handleMenuLinkClick = (link) => {
+    setDrawerOpen(false);
+    navigate(link);
+  };
+
+  // Navigate to product page on search select
   const handleSearchSelect = (productId) => {
     navigate(`/products/${productId}`);
     setDrawerOpen(false);
   };
 
-  const getCategoryLink = (cat) => `/categories/${encodeURIComponent(cat.name)}`;
-  const getBrandLink = (brand) => `/brands/${encodeURIComponent(brand.name)}`;
+  const getCategoryLink = (cat) => `/products?category=${encodeURIComponent(cat.name)}`;
+  const getBrandLink = (brand) => `/products?brand=${encodeURIComponent(brand.name)}`;
 
   return (
     <Slide appear={false} direction="down" in>
@@ -115,6 +124,7 @@ const MainNavbar = ({ onMenuClick }) => {
             </IconButton>
           )}
         </Toolbar>
+        {/* Hamburger Drawer */}
         <Drawer
           anchor={isMobile ? "right" : "top"}
           open={drawerOpen}
@@ -130,6 +140,12 @@ const MainNavbar = ({ onMenuClick }) => {
           }}
         >
           <Box sx={{ p: 3 }}>
+            {/* Add a close button at the top right */}
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+              <IconButton onClick={handleDrawerClose} aria-label="Close menu" size="large">
+                <CloseIcon fontSize="large" />
+              </IconButton>
+            </Box>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Menu
             </Typography>
@@ -140,45 +156,47 @@ const MainNavbar = ({ onMenuClick }) => {
             />
             <Divider sx={{ my: 2 }} />
             <List>
-  {menuSections.map(section => (
-    <ListItem button key={section.label} component="a" href={section.link}>
-      <ListItemIcon>{section.icon}</ListItemIcon>
-      <ListItemText primary={section.label} />
-    </ListItem>
-  ))}
-</List>
+              {menuSections.map(section => (
+                <ListItem
+                  button
+                  key={section.label}
+                  onClick={() => handleMenuLinkClick(section.link)}
+                >
+                  <ListItemIcon>{section.icon}</ListItemIcon>
+                  <ListItemText primary={section.label} />
+                </ListItem>
+              ))}
+            </List>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Categories</Typography>
             <List>
               {categories.map(cat => (
-             <ListItem
-             button
-             key={cat._id || cat.name}
-             component="a"
-             href={`/products?category=${encodeURIComponent(cat.name)}`}
-           >
-             <ListItemIcon>
-               <CategoryIcon />
-             </ListItemIcon>
-             <ListItemText primary={cat.name} />
-           </ListItem>
+                <ListItem
+                  button
+                  key={cat._id || cat.name}
+                  onClick={() => handleMenuLinkClick(getCategoryLink(cat))}
+                >
+                  <ListItemIcon>
+                    <CategoryIcon />
+                  </ListItemIcon>
+                  <ListItemText primary={cat.name} />
+                </ListItem>
               ))}
             </List>
             <Divider sx={{ my: 2 }} />
             <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Brands</Typography>
             <List>
               {brands.map(brand => (
-              <ListItem
-              button
-              key={brand._id || brand.name}
-              component="a"
-              href={`/products?brand=${encodeURIComponent(brand.name)}`}
-            >
-              <ListItemIcon>
-                <SiBrandfolder />
-              </ListItemIcon>
-              <ListItemText primary={brand.name} />
-            </ListItem>
+                <ListItem
+                  button
+                  key={brand._id || brand.name}
+                  onClick={() => handleMenuLinkClick(getBrandLink(brand))}
+                >
+                  <ListItemIcon>
+                    <SiBrandfolder />
+                  </ListItemIcon>
+                  <ListItemText primary={brand.name} />
+                </ListItem>
               ))}
             </List>
           </Box>
