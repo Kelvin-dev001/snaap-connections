@@ -1,14 +1,22 @@
 import axios from 'axios';
 
-// API base URL for Render backend
-const apiBaseUrl = process.env.REACT_APP_API_URL || 'https://snaap-connections.onrender.com/api';
+// Determine backend API URL
+const apiBaseUrl =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'https://localhost:5000/api'
+    : undefined);
 
-// For debugging - check what URL is being used
-console.log("API base URL:", apiBaseUrl);
-
-if (!process.env.REACT_APP_API_URL) {
-  console.warn("⚠️ REACT_APP_API_URL not set! Using fallback URL. Please set this in Vercel environment variables.");
+if (!apiBaseUrl) {
+  // Warn if missing in production (will break all API calls)
+  // eslint-disable-next-line no-console
+  console.warn(
+    "REACT_APP_API_URL is not set! Please define it in your Vercel environment variables."
+  );
 }
+
+// For debugging, shows which base URL is being used
+console.log("API base URL:", apiBaseUrl);
 
 // --- JWT TOKEN HANDLING ---
 export function setToken(token) {
@@ -26,10 +34,7 @@ export function removeToken() {
 // Configure axios instance
 const api = axios.create({
   baseURL: apiBaseUrl,
-  timeout: 30000, // Render can be slower than Vercel
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  timeout: 10000
 });
 
 // Attach JWT token to every request if present
@@ -41,45 +46,27 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    console.error('Request interceptor error:', error);
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor for better error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', {
-      url: error.config?.url,
-      method: error.config?.method,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message
-    });
-    
-    // Handle auth errors
-    if (error.response?.status === 401) {
-      removeToken();
-      // Could redirect to login here if needed
-    }
-    
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 const API = {
   // Product endpoints
   getProducts: (params = {}) => api.get('/products', { params }),
+
   getProduct: (id) => api.get(`/products/${id}`),
+
+  // Featured products: accepts custom params (limit, sort, etc)
   getFeaturedProducts: (params = {}) =>
     api.get('/products', { params: { featured: true, ...params } }),
+
+  // Pocket Friendly
   getPocketFriendlyProducts: ({ maxPrice = 20000, limit = 10 } = {}) =>
     api.get('/products', { params: { maxPrice, limit, sort: 'price_asc' } }),
+
+  // Deals/Promotions
   getDealsProducts: ({ limit = 30 } = {}) =>
     api.get('/products', { params: { isOnSale: true, limit } }),
+
   createProduct: (data) => api.post('/products', data),
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),
@@ -133,7 +120,7 @@ const API = {
   getCustomers: (params = {}) => api.get('/admin/customers', { params }),
   updateCustomer: (id, data) => api.patch(`/admin/customers/${id}`, data),
 
-  // Review endpoints
+  // ---- REVIEW ENDPOINTS ----
   getProductReviews: (productId) => api.get(`/products/${productId}/reviews`),
   submitProductReview: (productId, data) => api.post(`/products/${productId}/reviews`, data),
   getRecentReviews: () => api.get('/reviews/recent'),
@@ -141,7 +128,9 @@ const API = {
   approveReview: (reviewId) => api.patch(`/admin/reviews/${reviewId}/approve`),
   deleteReview: (reviewId) => api.delete(`/admin/reviews/${reviewId}`),
 
-  // Auth endpoints
+  // =======================
+  // Auth/JWT
+  // =======================
   login: async ({ password }) => {
     const response = await api.post('/auth/login', { password });
     if (response.data && response.data.token) {
@@ -154,12 +143,6 @@ const API = {
     return Promise.resolve();
   },
   checkAdmin: () => api.get('/auth/check'),
-
-  // Health check
-  healthCheck: () => api.get('/health'),
-
-  // Bot endpoint - using the same axios instance for consistency
-  sendBotMessage: (message) => api.post('/product-bot', { message }),
 };
 
 export default API;
