@@ -4,6 +4,8 @@ import ChatIcon from "@mui/icons-material/Chat";
 import CloseIcon from "@mui/icons-material/Close";
 import SendIcon from "@mui/icons-material/Send";
 import SmartToyIcon from "@mui/icons-material/SmartToy";
+// Import your existing API service - now it has a sendBotMessage method
+import API from '../api/apiService';
 
 const funGreetings = [
   "👋 Hi there! Need help picking a phone or gadget?",
@@ -31,23 +33,53 @@ const ProductAdvisorBot = () => {
 
   const sendMessage = async () => {
     if (!input.trim()) return;
-    const newMessages = [...messages, { sender: "user", text: input }];
+    
+    const userMessage = input.trim();
+    const newMessages = [...messages, { sender: "user", text: userMessage }];
     setMessages(newMessages);
     setInput("");
     setLoading(true);
 
     try {
-      const res = await fetch("/api/product-bot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
-      });
-      const data = await res.json();
-      setMessages([...newMessages, { sender: "bot", text: data.reply }]);
-    } catch {
-      setMessages([...newMessages, { sender: "bot", text: "Oops, something went wrong. Try again in a moment!" }]);
+      // Use the API service instead of direct fetch - this ensures consistent URL handling
+      const response = await API.sendBotMessage(userMessage);
+      
+      if (response.data && response.data.reply) {
+        setMessages([...newMessages, { sender: "bot", text: response.data.reply }]);
+      } else {
+        throw new Error('No reply received from bot');
+      }
+      
+    } catch (error) {
+      console.error('Bot Error:', error);
+      
+      let errorMessage = "Oops, something went wrong. Try again in a moment!";
+      
+      // Handle specific error cases
+      if (error.response) {
+        const status = error.response.status;
+        if (status === 500) {
+          errorMessage = "Bot service is temporarily unavailable. Please try again later.";
+        } else if (status === 404) {
+          errorMessage = "Bot service not found. Please contact support.";
+        } else if (status === 429) {
+          errorMessage = "Too many requests. Please wait a moment and try again.";
+        } else if (status >= 500) {
+          errorMessage = "Server error. Please try again later.";
+        }
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        errorMessage = "Network connection issue. Please check your internet and try again.";
+      } else if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+        errorMessage = "Request timed out. The bot service might be slow - please try again.";
+      }
+      
+      setMessages([...newMessages, { 
+        sender: "bot", 
+        text: errorMessage 
+      }]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -100,7 +132,7 @@ const ProductAdvisorBot = () => {
             >
               {/* Header */}
               <Box sx={{
-                bgcolor: "linear-gradient(96deg,#6dd5ed 30%,#1e3c72 100%)",
+                background: "linear-gradient(96deg,#6dd5ed 30%,#1e3c72 100%)",
                 color: "#fff",
                 py: 1.4, px: 2,
                 display: "flex",
@@ -118,6 +150,7 @@ const ProductAdvisorBot = () => {
                   <CloseIcon />
                 </IconButton>
               </Box>
+              
               {/* Messages */}
               <Box sx={{
                 p: 2,
@@ -142,14 +175,34 @@ const ProductAdvisorBot = () => {
                       bgcolor: msg.sender === "bot" ? "#e6f2ff" : "#6dd5ed",
                       color: msg.sender === "bot" ? "#1e3c72" : "#fff",
                       maxWidth: "80%",
-                      boxShadow: msg.sender === "user" ? "0 2px 8px #6dd5ed44" : "none"
+                      boxShadow: msg.sender === "user" ? "0 2px 8px #6dd5ed44" : "none",
+                      wordWrap: "break-word"
                     }}>
                       {msg.text}
                     </Box>
                   </Box>
                 ))}
+                {loading && (
+                  <Box sx={{ display: "flex", justifyContent: "flex-start", mb: 2 }}>
+                    <Box sx={{
+                      px: 2, py: 1,
+                      borderRadius: 3,
+                      bgcolor: "#e6f2ff",
+                      color: "#1e3c72",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1
+                    }}>
+                      <CircularProgress size={16} />
+                      <Typography variant="caption">
+                        Thinking...
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
                 <div ref={messagesEndRef} />
               </Box>
+              
               {/* Input */}
               <Box sx={{ px: 2, pb: 2, pt: 1, bgcolor: "#f7fcff", display: "flex", alignItems: "center", gap: 1 }}>
                 <TextField
@@ -159,19 +212,24 @@ const ProductAdvisorBot = () => {
                   placeholder="Ask about phones, deals, or compare..."
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" ? sendMessage() : null}
+                  onKeyDown={e => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      sendMessage();
+                    }
+                  }}
                   disabled={loading}
                   sx={{ bgcolor: "#fff", borderRadius: 2 }}
                 />
                 <Button
                   color="primary"
                   variant="contained"
-                  endIcon={<SendIcon />}
+                  endIcon={loading ? null : <SendIcon />}
                   disabled={loading || !input.trim()}
                   onClick={sendMessage}
                   sx={{ minWidth: 0, px: 2, borderRadius: 2 }}
                 >
-                  {loading ? <CircularProgress size={22} /> : "Send"}
+                  {loading ? <CircularProgress size={20} color="inherit" /> : "Send"}
                 </Button>
               </Box>
             </Paper>

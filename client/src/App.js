@@ -90,7 +90,7 @@ function App() {
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="*" element={<ErrorPage />} />
-          {/*<ProductAdvisorBot /> */}
+         <ProductAdvisorBot /> 
         </Route>
 
         {/* Admin Login */}
