@@ -8,10 +8,10 @@ import SmartToyIcon from "@mui/icons-material/SmartToy";
 import API from '../api/apiService';
 
 const funGreetings = [
-  "👋 Hi there! Need help picking a phone or gadget?",
-  "😃 Hey! Ask me anything about devices, deals, or tech.",
-  "🦸 Your personal tech guru, at your service!",
-  "🚀 Want the best phone for your budget?",
+  "Hi 👋 there! Need help picking a phone or gadget?",
+  "Hey! 😃 Ask me anything about devices, deals, or tech.",
+  "Your personal tech advisor, at your service! 🦸 ",
+  "Want the best phone for your budget? 🚀",
 ];
 
 const ProductAdvisorBot = () => {
@@ -143,7 +143,7 @@ const ProductAdvisorBot = () => {
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <SmartToyIcon sx={{ fontSize: 28 }} />
                   <Typography fontWeight={800} fontSize={18}>
-                    Snaap Tech Advisor
+                    Snaap AI Assistant
                   </Typography>
                 </Box>
                 <IconButton size="small" color="inherit" onClick={handleToggle}>
