@@ -143,6 +143,11 @@ const API = {
     return Promise.resolve();
   },
   checkAdmin: () => api.get('/auth/check'),
+
+  // =======================
+  // Product Advisor Bot (AI Chatbot)
+  // =======================
+  sendBotMessage: (message) => api.post('/product-bot', { message }),
 };
 
 export default API;

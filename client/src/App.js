@@ -28,7 +28,6 @@ import ErrorAlert from './components/ErrorAlert';
 import Login from './pages/admin/Login';
 import RequireAdmin from './components/RequireAdmin'; // <-- Add this import
 
-
 function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -74,6 +73,7 @@ function App() {
 
   return (
     <Router>
+      <ProductAdvisorBot /> {/* Globally available chatbot */}
       <Routes>
         {/* Client Routes */}
         <Route path="/" element={<AppLayout />}>
@@ -81,16 +81,15 @@ function App() {
           <Route path="products" element={<ProductListingPage />} />
           <Route path="products/:id" element={<ProductDetailPage />} /> 
           <Route path="/contact" element={<ContactPage />} />
-<Route path="/faqs" element={<FAQsPage />} />
-<Route path="/returns" element={<ReturnsPage />} />
-<Route path="/shipping" element={<ShippingPage />} />
-<Route path="/our-story" element={<OurStoryPage />} />
-<Route path="/careers" element={<CareersPage />} />
+          <Route path="/faqs" element={<FAQsPage />} />
+          <Route path="/returns" element={<ReturnsPage />} />
+          <Route path="/shipping" element={<ShippingPage />} />
+          <Route path="/our-story" element={<OurStoryPage />} />
+          <Route path="/careers" element={<CareersPage />} />
           <Route path="cart" element={<CartPage />} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="*" element={<ErrorPage />} />
-          {/*<ProductAdvisorBot /> */}
         </Route>
 
         {/* Admin Login */}

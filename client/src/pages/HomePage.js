@@ -59,7 +59,7 @@ const HomePage = () => {
         // Shuffle all products and pick first N for new arrivals
         const randomProducts = shuffle(allProductsRes.data.products || []);
         setFeaturedProducts(randomFeatured);
-        setNewArrivals(randomProducts.slice(0, 24)); // Show 24 random products
+        setNewArrivals(randomProducts.slice(0, 48)); // Show 24 random products
         setCategories(categoriesRes.data.categories || []);
         setBrands(brandsRes.data.brands || []);
         setRecentReviews(reviewsRes.data.reviews || []);
