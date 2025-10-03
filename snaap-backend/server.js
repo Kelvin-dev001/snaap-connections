@@ -18,7 +18,8 @@ const reviewRoutes = require('./routes/reviewRoutes');
 // --- CORS SETUP ---
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://snaapconnections.co.ke'
+  'https://snaapconnections.co.ke',
+  'https://www.snaapconnections.co.ke'
 ];
 
 app.use(cors({
