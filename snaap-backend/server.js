@@ -18,7 +18,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 // --- CORS SETUP ---
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://snaap-connections.vercel.app'
+  'https://snaapconnections.co.ke'
 ];
 
 app.use(cors({
