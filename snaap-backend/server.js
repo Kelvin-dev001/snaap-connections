@@ -55,16 +55,18 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// --- OPENAI PRODUCT ADVISOR BOT ROUTE ---
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+// --- DEEPSEEK PRODUCT ADVISOR BOT ROUTE ---
+// Replace OpenAI with DeepSeek using OpenAI SDK but set baseURL and use DeepSeek API key
+const deepseek = new OpenAI({
+  baseURL: 'https://api.deepseek.com',
+  apiKey: process.env.DEEPSEEK_API_KEY
 });
 
 app.post('/api/product-bot', async (req, res) => {
   const { message } = req.body;
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await deepseek.chat.completions.create({
+      model: "deepseek-chat",
       messages: [
         {
           role: "system",
@@ -78,8 +80,8 @@ app.post('/api/product-bot', async (req, res) => {
     });
     res.json({ reply: response.choices[0].message.content });
   } catch (err) {
-    console.error('OpenAI Error:', err?.response?.data || err);
-    res.status(500).json({ error: "Failed to fetch from OpenAI" });
+    console.error('DeepSeek Error:', err?.response?.data || err);
+    res.status(500).json({ error: "Failed to fetch from DeepSeek" });
   }
 });
 
