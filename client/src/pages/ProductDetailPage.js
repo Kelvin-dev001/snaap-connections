@@ -89,7 +89,7 @@ const ProductDetailPage = () => {
   const handleWhatsAppBuy = () => {
     if (!product) return;
     const message = `I'm interested in: ${product.name}\nPrice: ${formatPrice(product.discountPrice || product.price)}\nQuantity: ${quantity}\nLink: ${window.location.href}`;
-    window.open(`https://wa.me/254XXXXXXXXX?text=${encodeURIComponent(message)}`, '_blank');
+    window.open(`https://wa.me/254711111602?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const images = (product?.images && product.images.length > 0)
