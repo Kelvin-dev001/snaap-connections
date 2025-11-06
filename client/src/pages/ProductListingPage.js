@@ -12,7 +12,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import AutoCompleteSearch from '../components/AutoCompleteSearch';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getOptimizedCloudinaryUrl } from "./utils/cloudinaryUrl";
+import { getOptimizedCloudinaryUrl } from "../utils/cloudinaryUrl";
 
 const FALLBACK_IMAGE = "/fallback.png";
 const PRODUCTS_PER_PAGE_OPTIONS = [12, 24, 48, 96, 200, 500, 1000];

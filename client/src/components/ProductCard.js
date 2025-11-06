@@ -2,7 +2,7 @@ import React from "react";
 import { Card, CardMedia, CardContent, Typography, Box, Button, Stack, Chip, IconButton, Rating } from "@mui/material";
 import { Favorite, FavoriteBorder, WhatsApp, Star } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-import { getOptimizedCloudinaryUrl } from "./utils/cloudinaryUrl";
+import { getOptimizedCloudinaryUrl } from "../utils/cloudinaryUrl";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(price);

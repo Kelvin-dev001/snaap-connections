@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
-import { getOptimizedCloudinaryUrl } from './utils/cloudinaryUrl';
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinaryUrl';
 
 const ProductGrid = ({ items = [], loading = false }) => {
   const [loadedImages, setLoadedImages] = useState({});
