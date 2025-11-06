@@ -13,7 +13,7 @@ import WhatsAppIcon from "@mui/icons-material/WhatsApp";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 
 // WhatsApp number (customize as needed)
-const whatsappNumber = "254759293030254711111602";
+const whatsappNumber = "254711111602";
 const whatsappLink = `https://wa.me/${whatsappNumber}?text=Hello+Snaap+Connections%2C+I+need+help+with...`;
 
 const WhatsAppCTASection = () => {

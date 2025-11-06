@@ -13,6 +13,8 @@ const BADGE_COLOR = {
   SALE: "warning"
 };
 
+const WHATSAPP_NUMBER = "254711111602"; // Updated WhatsApp number
+
 const ProductCard = ({
   product,
   onWishlistToggle,
@@ -28,6 +30,9 @@ const ProductCard = ({
     product.discountPrice && product.price
       ? Math.round(100 - (product.discountPrice / product.price) * 100)
       : null;
+
+  // Build WhatsApp message (model only if available)
+  const message = `Hello, am interested in buying (${product.name}${product.model ? ', ' + product.model : ''}, KES ${product.discountPrice || product.price})`;
 
   return (
     <Card
@@ -164,8 +169,7 @@ const ProductCard = ({
             }}
             onClick={e => {
               e.stopPropagation();
-              const message = `I'm interested in: ${product.name}\nPrice: ${formatPrice(product.discountPrice || product.price)}\nLink: ${window.location.origin}/products/${product._id}`;
-              window.open(`https://wa.me/254XXXXXXXXX?text=${encodeURIComponent(message)}`, "_blank");
+              window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, "_blank");
             }}
           >
             Buy on WhatsApp
