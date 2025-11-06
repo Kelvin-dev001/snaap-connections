@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { getOptimizedCloudinaryUrl } from './utils/cloudinaryUrl';
 
 const ProductGrid = ({ items = [], loading = false }) => {
   const [loadedImages, setLoadedImages] = useState({});
@@ -60,7 +61,12 @@ const ProductGrid = ({ items = [], loading = false }) => {
                     <div className="absolute inset-0 bg-gray-200 animate-pulse"></div>
                   )}
                   <img
-                    src={`http://localhost:5000${product.imageUrl}`}
+                    src={
+                      getOptimizedCloudinaryUrl(
+                        product.imageUrl,
+                        { width: 400 }
+                      )
+                    }
                     alt={product.name}
                     className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${loadedImages[product._id] ? 'opacity-100' : 'opacity-0'}`}
                     onLoad={() => handleImageLoad(product._id)}

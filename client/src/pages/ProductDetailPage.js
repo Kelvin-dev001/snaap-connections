@@ -18,6 +18,7 @@ import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import ReviewSection from '../components/ReviewsSection';
+import { getOptimizedCloudinaryUrl } from './utils/cloudinaryUrl'; // <-- Import helper
 
 const FALLBACK_IMAGE = "/fallback.png"; // Place a fallback image in your public folder
 
@@ -96,7 +97,8 @@ const ProductDetailPage = () => {
     ? product.images
     : [FALLBACK_IMAGE];
 
-  const mainImage = images[selectedImage] || FALLBACK_IMAGE;
+  // Use the helper for main image and thumbnails
+  const mainImage = getOptimizedCloudinaryUrl(images[selectedImage], { width: isMobile ? 350 : 600 }) || FALLBACK_IMAGE;
 
   if (loading) {
     return <LoadingSpinner message="Loading product details..." />;
@@ -126,8 +128,11 @@ const ProductDetailPage = () => {
             <Box>
               <CardMedia
                 component="img"
-                image={mainImage}
+                src={mainImage}
                 alt={`${product.name} - main`}
+                loading="lazy"
+                width={isMobile ? 350 : 600}
+                height={isMobile ? 250 : 400}
                 sx={{
                   width: '100%',
                   height: isMobile ? 250 : 400,
@@ -163,9 +168,12 @@ const ProductDetailPage = () => {
                   }}
                 >
                   <img
-                    src={image}
+                    src={getOptimizedCloudinaryUrl(image, { width: 100 })}
                     alt={`Thumbnail ${index + 1}`}
+                    width={70}
+                    height={70}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    loading="lazy"
                   />
                 </Box>
               ))}
@@ -477,9 +485,12 @@ const ProductDetailPage = () => {
                     <CardMedia
                       component="img"
                       height="160"
-                      image={related.thumbnail || related.images?.[0] || FALLBACK_IMAGE}
+                      image={getOptimizedCloudinaryUrl(related.thumbnail || related.images?.[0] || FALLBACK_IMAGE, { width: 220 })}
                       alt={related.name}
                       sx={{ objectFit: 'contain', p: 2 }}
+                      loading="lazy"
+                      width={220}
+                     
                     />
                     <IconButton
                       aria-label="add to wishlist"

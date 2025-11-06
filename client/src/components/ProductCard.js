@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardMedia, CardContent, Typography, Box, Button, Stack, Chip, IconButton, Rating } from "@mui/material";
 import { Favorite, FavoriteBorder, WhatsApp, Star } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { getOptimizedCloudinaryUrl } from "./utils/cloudinaryUrl";
 
 const formatPrice = (price) =>
   new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(price);
@@ -14,6 +15,9 @@ const BADGE_COLOR = {
 };
 
 const WHATSAPP_NUMBER = "254711111602"; // Updated WhatsApp number
+
+const CARD_IMAGE_WIDTH = 400;
+const CARD_IMAGE_HEIGHT = 300;
 
 const ProductCard = ({
   product,
@@ -30,6 +34,11 @@ const ProductCard = ({
     product.discountPrice && product.price
       ? Math.round(100 - (product.discountPrice / product.price) * 100)
       : null;
+
+  // Determine optimized image URL (use thumbnail, images[0] or fallback)
+  const cloudUrl =
+    product.thumbnail || (Array.isArray(product.images) && product.images.length > 0 && product.images[0]);
+  const imgUrl = getOptimizedCloudinaryUrl(cloudUrl, { width: CARD_IMAGE_WIDTH });
 
   // Build WhatsApp message (model only if available)
   const message = `Hello, am interested in buying (${product.name}${product.model ? ', ' + product.model : ''}, KES ${product.discountPrice || product.price})`;
@@ -59,13 +68,18 @@ const ProductCard = ({
       <Box sx={{ position: "relative", pt: 2, px: 2 }}>
         <CardMedia
           component="img"
-          height={180}
-          image={product.thumbnail || product.images?.[0] || "/fallback.png"}
+          src={imgUrl}
           alt={product.name}
+          loading="lazy"
+          width={CARD_IMAGE_WIDTH}
+          height={CARD_IMAGE_HEIGHT}
           sx={{
             objectFit: "contain",
             mx: "auto",
-            maxHeight: 180,
+            maxHeight: CARD_IMAGE_HEIGHT,
+            minHeight: CARD_IMAGE_HEIGHT,
+            maxWidth: CARD_IMAGE_WIDTH,
+            minWidth: CARD_IMAGE_WIDTH,
             borderRadius: "16px",
             background: "#f7f8fa"
           }}
