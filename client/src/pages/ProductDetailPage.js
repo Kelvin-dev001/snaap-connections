@@ -18,7 +18,7 @@ import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import ReviewSection from '../components/ReviewsSection';
-import { getOptimizedCloudinaryUrl } from './utils/cloudinaryUrl'; // <-- Import helper
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinaryUrl'; // <-- Import helper
 
 const FALLBACK_IMAGE = "/fallback.png"; // Place a fallback image in your public folder
 
