@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Typography, Grid, Paper, Stack, Avatar, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Typography, Grid, Paper, Avatar, useTheme, useMediaQuery } from "@mui/material";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import SupportAgentIcon from "@mui/icons-material/SupportAgent";

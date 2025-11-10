@@ -2,7 +2,7 @@ import React from "react";
 import Slider from "react-slick";
 import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
 import ProductCard from "./ProductCard";
-import LocalFireDepartmentIcon from "@mui/icons-material/LocalFireDepartment";
+
 
 // Example products for demo/testing, replace with your prop or API data
 const demoNewArrivals = [

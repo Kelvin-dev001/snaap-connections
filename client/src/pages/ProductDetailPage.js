@@ -4,14 +4,13 @@ import {
   Box, Typography, Button, Grid, Card, CardContent, CardMedia, 
   Chip, Container, Divider, Tabs, Tab, List, ListItem,
   ListItemText, IconButton, Rating, useTheme,
-  useMediaQuery, Breadcrumbs, Link, Skeleton
+  useMediaQuery, Breadcrumbs, Link
 } from '@mui/material';
 import {
   Favorite, FavoriteBorder, Star,
   WhatsApp, Share, LocalShipping,
   AssignmentReturn, VerifiedUser
 } from '@mui/icons-material';
-import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import API from '../api/apiService';

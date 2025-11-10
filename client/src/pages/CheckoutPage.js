@@ -6,16 +6,16 @@ import {
   StepLabel, useTheme, useMediaQuery
 } from '@mui/material';
 import {
-  WhatsApp, ArrowBack, LocalShipping, Payment, Assignment
+  WhatsApp,  LocalShipping, Payment, Assignment
 } from '@mui/icons-material';
-import { Link } from 'react-router-dom';
+
 import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 
 const CheckoutPage = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+ 
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -149,7 +149,7 @@ const CheckoutPage = () => {
       };
 
       // Submit order to backend
-      const response = await API.createOrder(orderPayload);
+    
       
       // Clear cart on successful order
       await API.clearCart();

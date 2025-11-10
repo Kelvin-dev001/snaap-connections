@@ -26,7 +26,7 @@ import { DRAWER_WIDTH } from '../constants/layout';
 
 const Sidebar = ({ mobileOpen, handleDrawerToggle }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+ 
   const location = useLocation();
 
   const menuItems = [

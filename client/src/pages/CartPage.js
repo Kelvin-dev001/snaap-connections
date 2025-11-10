@@ -3,12 +3,12 @@ import {
   Box, Typography, Button, Grid, Card, CardContent, CardMedia, 
   Divider, Container, TextField, IconButton, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper,
-  useTheme, useMediaQuery, Link
+  useTheme, useMediaQuery
 } from '@mui/material';
 import {
   Delete, Add, Remove, ShoppingCart, WhatsApp, ArrowBack
 } from '@mui/icons-material';
-import API from '../api/apiService';
+
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Box, Typography, Stack, Chip, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Typography, Stack, useTheme, useMediaQuery } from "@mui/material";
 import Slider from "react-slick";
 import API from "../api/apiService";
 import ProductCard from "./ProductCard";

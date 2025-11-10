@@ -7,7 +7,7 @@ import {
   CircularProgress, TextField, TablePagination
 } from '@mui/material';
 import {
-  Search, Clear, Person, Email, Phone, 
+  Search, Clear, Email, Phone, 
   ShoppingCart, Star, Block
 } from '@mui/icons-material';
 import { format } from 'date-fns';
