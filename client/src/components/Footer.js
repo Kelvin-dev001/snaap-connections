@@ -93,86 +93,12 @@ const animatedGradientKeyframes = `
 }
 `;
 
-const AnimatedWaveDivider = () => (
-  <Box
-    sx={{
-      position: 'relative',
-      width: '100%',
-      height: 70,
-      marginTop: '-1px',
-      overflow: 'hidden',
-      background: 'transparent'
-    }}
-  >
-    <Box
-      component="svg"
-      viewBox="0 0 1440 70"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      sx={{
-        width: '200%',
-        height: '100%',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        animation: 'waveAnimation 16s linear infinite'
-      }}
-    >
-      <path
-        d="
-          M0,40 
-          C360,80 1080,0 1440,40 
-          L1440,70 L0,70 Z
-        "
-        fill="url(#waveGradient)"
-        fillOpacity="0.38"
-      />
-      <defs>
-        <linearGradient id="waveGradient" x1="0" y1="35" x2="0" y2="70" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#6dd5ed" />
-          <stop offset="1" stopColor="#1e3c72" />
-        </linearGradient>
-      </defs>
-    </Box>
-    <Box
-      component="svg"
-      viewBox="0 0 1440 70"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      sx={{
-        width: '200%',
-        height: '100%',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        opacity: 0.7,
-        animation: 'waveAnimation 24s linear infinite',
-        animationDelay: '0.5s'
-      }}
-    >
-      <path
-        d="
-          M0,50 
-          C360,70 1080,20 1440,50 
-          L1440,70 L0,70 Z
-        "
-        fill="url(#waveGradient2)"
-        fillOpacity="0.6"
-      />
-      <defs>
-        <linearGradient id="waveGradient2" x1="0" y1="35" x2="0" y2="70" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#1e3c72" />
-          <stop offset="1" stopColor="#6dd5ed" />
-        </linearGradient>
-      </defs>
-    </Box>
-  </Box>
-);
+// AnimatedWaveDivider component is not used anymore
 
 const Footer = () => (
   <>
     <style>{animatedGradientKeyframes}</style>
-    <AnimatedWaveDivider />
+    {/* AnimatedWaveDivider removed */}
     <Box
       sx={{
         ...animatedGradientStyle,
