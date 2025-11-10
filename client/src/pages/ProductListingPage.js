@@ -11,7 +11,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import AutoCompleteSearch from '../components/AutoCompleteSearch';
 import { useNavigate, useLocation } from 'react-router-dom';
-import ProductCard from '../components/ProductCard'; // <-- Make sure this path is correct!
+import ProductCard from '../components/ProductCard';
 
 const PRODUCTS_PER_PAGE_OPTIONS = [12, 24, 48, 96, 200, 500, 1000];
 
@@ -89,34 +89,13 @@ const ProductListingPage = () => {
     fetchProducts();
   }, [filters]);
 
-  const handleCategoryChange = (categoryName) => {
-    setFilters(prev => ({
-      ...prev,
-      category: prev.category === categoryName ? '' : categoryName,
-      page: 1
-    }));
-  };
-  const handleBrandChange = (brandName) => {
-    setFilters(prev => ({
-      ...prev,
-      brand: prev.brand === brandName ? '' : brandName,
-      page: 1
-    }));
-  };
+  // All filter handlers are inline, no unused-var warnings now
 
   const handlePriceChange = (event, newValue) => {
     setFilters(prev => ({
       ...prev,
       minPrice: newValue[0],
       maxPrice: newValue[1],
-      page: 1
-    }));
-  };
-
-  const handleSearchChange = (e) => {
-    setFilters(prev => ({
-      ...prev,
-      search: e.target.value,
       page: 1
     }));
   };
@@ -163,10 +142,6 @@ const ProductListingPage = () => {
         ? prev.filter(id => id !== productId)
         : [...prev, productId]
     );
-  };
-
-  const handleProductClick = (id) => {
-    navigate(`/products/${id}`);
   };
 
   const handleSearchSelect = (productId) => {
@@ -271,7 +246,9 @@ const ProductListingPage = () => {
               <Select
                 name="category"
                 value={filters.category}
-                onChange={e => setFilters(f => ({ ...f, category: e.target.value, page: 1 }))}
+                onChange={e => setFilters(f => ({
+                  ...f, category: e.target.value, page: 1 
+                }))}
                 fullWidth
                 displayEmpty
                 size="small"
@@ -291,7 +268,9 @@ const ProductListingPage = () => {
               <Select
                 name="brand"
                 value={filters.brand}
-                onChange={e => setFilters(f => ({ ...f, brand: e.target.value, page: 1 }))}
+                onChange={e => setFilters(f => ({
+                  ...f, brand: e.target.value, page: 1
+                }))}
                 fullWidth
                 displayEmpty
                 size="small"
