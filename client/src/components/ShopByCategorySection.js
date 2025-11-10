@@ -3,6 +3,10 @@ import { Box, Typography, Card, CardActionArea } from "@mui/material";
 import { Link } from "react-router-dom";
 import API from "../api/apiService";
 
+const CARD_HEIGHT = 200;
+const CARD_WIDTH = 150;
+const CARD_ASPECT_RATIO = "5/7"; // tall ratio
+
 const ShopByCategorySection = () => {
   const [categories, setCategories] = useState([]);
 
@@ -44,8 +48,8 @@ const ShopByCategorySection = () => {
         }
         .flip-card {
           perspective: 900px;
-          min-width: 140px;
-          max-width: 160px;
+          min-width: ${CARD_WIDTH}px;
+          max-width: ${CARD_WIDTH}px;
           flex: 0 0 auto;
         }
         .flip-card-inner {
@@ -97,14 +101,17 @@ const ShopByCategorySection = () => {
       <Box className="scroll-row" sx={{ px: { xs: 1, md: 3 }, pb: 1 }}>
         {categories.map((cat, idx) => (
          <Link
-         to={`/products?category=${encodeURIComponent(cat.name)}`}
-         style={{ textDecoration: "none" }}
-         key={cat._id || cat.name}
-       >
+           to={`/products?category=${encodeURIComponent(cat.name)}`}
+           style={{ textDecoration: "none" }}
+           key={cat._id || cat.name}
+         >
             <Card
               className="flip-card"
               elevation={0}
               sx={{
+                width: CARD_WIDTH,
+                height: CARD_HEIGHT,
+                aspectRatio: CARD_ASPECT_RATIO,
                 borderRadius: "20px",
                 background: "#fff",
                 color: "primary.main",
@@ -114,9 +121,6 @@ const ShopByCategorySection = () => {
                 position: "relative",
                 overflow: "visible",
                 border: "none",
-                minHeight: 180,
-                minWidth: 140,
-                maxWidth: 160,
                 "&:hover": {
                   boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
                   zIndex: 2
@@ -127,7 +131,8 @@ const ShopByCategorySection = () => {
               <CardActionArea
                 sx={{
                   borderRadius: "20px",
-                  minHeight: 180,
+                  height: CARD_HEIGHT,
+                  width: CARD_WIDTH,
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",

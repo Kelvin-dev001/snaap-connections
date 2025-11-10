@@ -6,6 +6,10 @@ import Marquee from "react-fast-marquee";
 
 // Install react-fast-marquee with: npm install react-fast-marquee
 
+const CARD_HEIGHT = 180;
+const CARD_WIDTH = 140;
+const CARD_ASPECT_RATIO = "7/9"; // Height/Width, slightly taller than wide
+
 const ShopByBrandSection = () => {
   const [brands, setBrands] = useState([]);
 
@@ -32,8 +36,8 @@ const ShopByBrandSection = () => {
         {`
         .flip-card {
           perspective: 900px;
-          min-width: 120px;
-          max-width: 140px;
+          min-width: ${CARD_WIDTH}px;
+          max-width: ${CARD_WIDTH}px;
           flex: 0 0 auto;
         }
         .flip-card-inner {
@@ -99,6 +103,9 @@ const ShopByBrandSection = () => {
                 className="flip-card"
                 elevation={0}
                 sx={{
+                  width: CARD_WIDTH,
+                  height: CARD_HEIGHT,
+                  aspectRatio: CARD_ASPECT_RATIO,
                   borderRadius: "20px",
                   background: "#fff",
                   color: "primary.main",
@@ -108,9 +115,6 @@ const ShopByBrandSection = () => {
                   position: "relative",
                   overflow: "visible",
                   border: "none",
-                  minHeight: 160,
-                  minWidth: 120,
-                  maxWidth: 140,
                   "&:hover": {
                     boxShadow: "0 10px 32px 0 rgba(30,60,114,0.14)",
                     zIndex: 2
@@ -121,7 +125,9 @@ const ShopByBrandSection = () => {
                 <CardActionArea
                   sx={{
                     borderRadius: "20px",
-                    minHeight: 160,
+                    minHeight: CARD_HEIGHT,
+                    height: CARD_HEIGHT,
+                    width: CARD_WIDTH,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
@@ -130,7 +136,10 @@ const ShopByBrandSection = () => {
                     "&:focus-visible": { outline: "none" }
                   }}
                 >
-                  <Box className="flip-card-inner" sx={{ width: "100%", height: "100%", minHeight: 90 }}>
+                  <Box 
+                    className="flip-card-inner" 
+                    sx={{ width: "100%", height: "100%", minHeight: CARD_HEIGHT }}
+                  >
                     {/* Front Face */}
                     <Box className="flip-card-front">
                       {brand.logo ? (

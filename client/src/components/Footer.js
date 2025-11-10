@@ -22,6 +22,9 @@ import {
 const bluishGradient =
   'linear-gradient(135deg, #1e3c72 0%, #2a5298 60%, #6dd5ed 100%)';
 
+// Add grid minHeight for CLS, adjust as needed for your layout
+const FOOTER_BRANDING_MIN_HEIGHT = 110;
+
 const shopLinks = [
   { label: 'All Products', href: '/products' },
   { label: 'Smartphones', href: '/products?category=Smartphones' },
@@ -72,8 +75,6 @@ const animatedGradientStyle = {
 
 const Footer = () => (
   <>
-    {/* <style>{animatedGradientKeyframes}</style> */}
-    {/* AnimatedWaveDivider removed */}
     <Box
       sx={{
         ...animatedGradientStyle,
@@ -87,7 +88,7 @@ const Footer = () => (
     >
       <Container maxWidth="xl">
         <Grid container spacing={6} justifyContent="space-between">
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} sx={{ minHeight: FOOTER_BRANDING_MIN_HEIGHT }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
               <img
                 src="/snaap-logo.jpeg"
@@ -134,7 +135,7 @@ const Footer = () => (
             </Stack>
           </Grid>
           {footerLinks.map(section => (
-            <Grid item xs={12} sm={4} md={2.5} key={section.title}>
+            <Grid item xs={12} sm={4} md={2.5} key={section.title} sx={{minHeight:80}}>
               <Typography variant="subtitle1" fontWeight={700} sx={{
                 color: '#c4e0fc',
                 letterSpacing: '1.1px',
@@ -168,7 +169,7 @@ const Footer = () => (
               </Stack>
             </Grid>
           ))}
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} sx={{minHeight:80}}>
             <Typography variant="subtitle1" fontWeight={700}
               sx={{ color: '#c4e0fc', letterSpacing: '1.1px', mb: 1.5 }}>
               Contact Us
