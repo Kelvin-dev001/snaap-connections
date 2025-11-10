@@ -1,5 +1,4 @@
 import React from "react";
-import Slider from "react-slick";
 import { Box, Typography, Button, useMediaQuery, useTheme, Stack } from "@mui/material";
 
 // Cloudinary optimized image URL (update with your cloud name if needed)
