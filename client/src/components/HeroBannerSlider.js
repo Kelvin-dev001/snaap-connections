@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, Button, useMediaQuery, useTheme, Stack } from "@mui/material";
 
-// Cloudinary optimized image URL (update with your cloud name if needed)
+// Cloudinary optimized image URLs
 const HERO_IMAGE_DESKTOP = "https://res.cloudinary.com/dltfgasbb/image/upload/f_auto,q_auto,w_1200/banner5_e5vkse.jpg";
 const HERO_IMAGE_MOBILE = "https://res.cloudinary.com/dltfgasbb/image/upload/f_auto,q_auto,w_500/banner5_e5vkse.jpg";
 
@@ -41,29 +41,30 @@ const banner = {
 const HeroBannerSlider = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  // Choose correct Cloudinary image for device
+
   const imageUrl = isMobile ? HERO_IMAGE_MOBILE : HERO_IMAGE_DESKTOP;
   const imgWidth = isMobile ? 500 : 1200;
   const imgHeight = isMobile ? 210 : 370;
 
-  // Best practice: preload the LCP hero image (for CRA use React Helmet, or put in public/index.html)
-  // <link rel="preload" as="image" href={imageUrl} />
-
   return (
-    <Box sx={{
-      position: "relative",
-      width: "100%",
-      overflow: "hidden",
-      borderRadius: { xs: 0, md: "0 0 32px 32px" },
-      minHeight: imgHeight,
-      height: imgHeight
-    }}>
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        overflow: "hidden",
+        borderRadius: { xs: 0, md: "0 0 32px 32px" },
+        minHeight: imgHeight,
+        height: imgHeight,
+        aspectRatio: `${imgWidth}/${imgHeight}`,
+      }}
+    >
       <style>{strikingLightsCSS}</style>
       <Box
         sx={{
           position: "relative",
           minHeight: imgHeight,
           height: imgHeight,
+          aspectRatio: `${imgWidth}/${imgHeight}`,
           display: "flex",
           alignItems: "center",
           justifyContent: isMobile ? "center" : "flex-start",
@@ -74,13 +75,14 @@ const HeroBannerSlider = () => {
           overflow: "hidden",
         }}
       >
-        {/* Real <img> used for LCP with width/height, eager loading */}
+        {/* LCP <img> with all best practices */}
         <img
           src={imageUrl}
           alt={banner.title}
           width={imgWidth}
           height={imgHeight}
           loading="eager"
+          decoding="async"
           style={{
             width: '100%',
             height: imgHeight,
@@ -90,13 +92,10 @@ const HeroBannerSlider = () => {
             left: 0,
             zIndex: 0,
             filter: "brightness(.88) saturate(1.08)",
-            transition: "transform 1s cubic-bezier(.4,2,.4,1)",
             borderRadius: isMobile ? 0 : "0 0 32px 32px"
           }}
         />
-        {/* Striking lights overlay */}
         <div className="striking-lights" />
-        {/* Content */}
         <Box
           sx={{
             mt: 0,
