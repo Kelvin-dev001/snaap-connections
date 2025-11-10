@@ -18,9 +18,9 @@ import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import ReviewSection from '../components/ReviewsSection';
-import { getOptimizedCloudinaryUrl } from '../utils/cloudinaryUrl'; // <-- Import helper
+import { getOptimizedCloudinaryUrl } from '../utils/cloudinaryUrl';
 
-const FALLBACK_IMAGE = "/fallback.png"; // Place a fallback image in your public folder
+const FALLBACK_IMAGE = "/fallback.png";
 
 const ProductDetailPage = () => {
   const { id } = useParams();
@@ -97,7 +97,6 @@ const ProductDetailPage = () => {
     ? product.images
     : [FALLBACK_IMAGE];
 
-  // Use the helper for main image and thumbnails
   const mainImage = getOptimizedCloudinaryUrl(images[selectedImage], { width: isMobile ? 350 : 600 }) || FALLBACK_IMAGE;
 
   if (loading) {
@@ -114,7 +113,6 @@ const ProductDetailPage = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Breadcrumbs */}
       <Breadcrumbs aria-label="breadcrumb" sx={{ mb: 3 }}>
         <Link component={RouterLink} color="inherit" to="/">Home</Link>
         <Link component={RouterLink} color="inherit" to={`/products?category=${product.category}`}>{product.category}</Link>
@@ -142,7 +140,6 @@ const ProductDetailPage = () => {
                 }}
               />
             </Box>
-            {/* Thumbnail navigation */}
             <Box sx={{
               display: 'flex',
               gap: 1,
@@ -180,7 +177,6 @@ const ProductDetailPage = () => {
             </Box>
           </Box>
         </Grid>
-
         {/* Product Info */}
         <Grid item xs={12} md={6}>
           <Box sx={{ mb: 3 }}>
@@ -188,7 +184,6 @@ const ProductDetailPage = () => {
               {product.name}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              {/* Optionally: Display average rating from reviews */}
               <Rating value={4.5} precision={0.1} readOnly sx={{ mr: 1 }} />
               <Typography variant="body2" color="text.secondary">
                 4.5 (24 reviews)
@@ -454,7 +449,6 @@ const ProductDetailPage = () => {
                 Customer Reviews
               </Typography>
               <Box sx={{ mt: 4 }}>
-                {/* Render the review section and pass the actual product._id */}
                 <ReviewSection productId={product._id} />
               </Box>
             </Box>
@@ -490,7 +484,6 @@ const ProductDetailPage = () => {
                       sx={{ objectFit: 'contain', p: 2 }}
                       loading="lazy"
                       width={220}
-                     
                     />
                     <IconButton
                       aria-label="add to wishlist"
