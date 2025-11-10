@@ -7,7 +7,6 @@ import {
   ListItemText, 
   Divider, 
   useTheme,
-  useMediaQuery,
   Box,
   Typography
 } from '@mui/material';

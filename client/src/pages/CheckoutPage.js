@@ -3,7 +3,7 @@ import {
   Box, Typography, Button, Grid, Card, CardContent, 
   Divider, Container, TextField, FormControlLabel,
   Checkbox, Radio, RadioGroup, Stepper, Step,
-  StepLabel, useTheme, useMediaQuery
+  StepLabel, useTheme
 } from '@mui/material';
 import {
   WhatsApp,  LocalShipping, Payment, Assignment
@@ -127,26 +127,7 @@ const CheckoutPage = () => {
       setError(null);
       
       // Prepare order data
-      const orderPayload = {
-        products: cartItems.map(item => ({
-          product: item.id,
-          quantity: item.quantity,
-          price: item.price
-        })),
-        phone: orderData.address.phone,
-        email: orderData.address.email,
-        shippingAddress: orderData.deliveryMethod === 'delivery' ? {
-          street: orderData.address.street,
-          city: orderData.address.city,
-          postalCode: orderData.address.postalCode,
-          country: 'Kenya'
-        } : null,
-        deliveryMethod: orderData.deliveryMethod,
-        paymentMethod: orderData.paymentMethod,
-        subtotal,
-        shippingFee,
-        total
-      };
+     
 
       // Submit order to backend
     
