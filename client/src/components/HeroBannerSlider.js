@@ -1,11 +1,35 @@
 import React from "react";
 import { Box, Typography, Button, useMediaQuery, useTheme, Stack } from "@mui/material";
 
-// Cloudinary optimized image URLs
+// Cloudinary optimized image URL (update with your cloud name if needed)
 const HERO_IMAGE_DESKTOP = "https://res.cloudinary.com/dltfgasbb/image/upload/f_auto,q_auto,w_1200/banner5_e5vkse.jpg";
 const HERO_IMAGE_MOBILE = "https://res.cloudinary.com/dltfgasbb/image/upload/f_auto,q_auto,w_500/banner5_e5vkse.jpg";
 
-// Removed strikingLightsCSS and animations
+const strikingLightsCSS = `
+@keyframes strikingMove {
+  0% { background-position: 0% 50%;}
+  100% { background-position: 100% 50%;}
+}
+.striking-lights {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+      120deg, 
+      rgba(255,255,255,0.08) 0%, 
+      #6dd5ed33 15%, 
+      #1e3c72bb 40%, 
+      #ffefb0cc 60%,
+      #6dd5ed44 75%,
+      rgba(255,255,255,0.08) 100%
+  );
+  background-size: 200% 200%;
+  mix-blend-mode: lighten;
+  animation: strikingMove 6s linear infinite alternate;
+  filter: blur(3px);
+}
+`;
 
 const banner = {
   title: "Stay Connected, Stay Ahead!",
@@ -17,29 +41,29 @@ const banner = {
 const HeroBannerSlider = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
+  // Choose correct Cloudinary image for device
   const imageUrl = isMobile ? HERO_IMAGE_MOBILE : HERO_IMAGE_DESKTOP;
   const imgWidth = isMobile ? 500 : 1200;
   const imgHeight = isMobile ? 210 : 370;
 
+  // Best practice: preload the LCP hero image (for CRA use React Helmet, or put in public/index.html)
+  // <link rel="preload" as="image" href={imageUrl} />
+
   return (
-    <Box
-      sx={{
-        position: "relative",
-        width: "100%",
-        overflow: "hidden",
-        borderRadius: { xs: 0, md: "0 0 32px 32px" },
-        minHeight: imgHeight,
-        height: imgHeight,
-        aspectRatio: `${imgWidth}/${imgHeight}`,
-      }}
-    >
+    <Box sx={{
+      position: "relative",
+      width: "100%",
+      overflow: "hidden",
+      borderRadius: { xs: 0, md: "0 0 32px 32px" },
+      minHeight: imgHeight,
+      height: imgHeight
+    }}>
+      <style>{strikingLightsCSS}</style>
       <Box
         sx={{
           position: "relative",
           minHeight: imgHeight,
           height: imgHeight,
-          aspectRatio: `${imgWidth}/${imgHeight}`,
           display: "flex",
           alignItems: "center",
           justifyContent: isMobile ? "center" : "flex-start",
@@ -50,13 +74,13 @@ const HeroBannerSlider = () => {
           overflow: "hidden",
         }}
       >
+        {/* Real <img> used for LCP with width/height, eager loading */}
         <img
           src={imageUrl}
           alt={banner.title}
           width={imgWidth}
           height={imgHeight}
           loading="eager"
-          decoding="async"
           style={{
             width: '100%',
             height: imgHeight,
@@ -66,10 +90,13 @@ const HeroBannerSlider = () => {
             left: 0,
             zIndex: 0,
             filter: "brightness(.88) saturate(1.08)",
+            transition: "transform 1s cubic-bezier(.4,2,.4,1)",
             borderRadius: isMobile ? 0 : "0 0 32px 32px"
           }}
         />
-        {/* Removed striking lights overlay */}
+        {/* Striking lights overlay */}
+        <div className="striking-lights" />
+        {/* Content */}
         <Box
           sx={{
             mt: 0,
@@ -86,6 +113,7 @@ const HeroBannerSlider = () => {
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
+            animation: "fadein 1s cubic-bezier(.4,2,.4,1)",
             p: { xs: "0.8rem 0.5rem", md: "1.6rem 2.1rem" },
             bgcolor: "rgba(18, 36, 60, 0.32)",
             boxShadow: "0 2px 14px 0 #6dd5ed22",
