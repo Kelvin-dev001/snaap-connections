@@ -65,39 +65,14 @@ const socialLinks = [
 const animatedGradientStyle = {
   background: bluishGradient,
   backgroundSize: '200% 200%',
-  animation: 'gradientMove 8s ease-in-out infinite'
+  // animation removed
 };
 
-const animatedGradientKeyframes = `
-@keyframes gradientMove {
-  0% {
-    background-position: 0% 50%;
-  }
-  25% {
-    background-position: 50% 100%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  75% {
-    background-position: 50% 0%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
-@keyframes waveAnimation {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-`;
-
-// AnimatedWaveDivider component is not used anymore
+// All animations removed, including animatedGradientKeyframes
 
 const Footer = () => (
   <>
-    <style>{animatedGradientKeyframes}</style>
+    {/* <style>{animatedGradientKeyframes}</style> */}
     {/* AnimatedWaveDivider removed */}
     <Box
       sx={{

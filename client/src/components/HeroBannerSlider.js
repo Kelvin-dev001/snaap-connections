@@ -5,31 +5,7 @@ import { Box, Typography, Button, useMediaQuery, useTheme, Stack } from "@mui/ma
 const HERO_IMAGE_DESKTOP = "https://res.cloudinary.com/dltfgasbb/image/upload/f_auto,q_auto,w_1200/banner5_e5vkse.jpg";
 const HERO_IMAGE_MOBILE = "https://res.cloudinary.com/dltfgasbb/image/upload/f_auto,q_auto,w_500/banner5_e5vkse.jpg";
 
-const strikingLightsCSS = `
-@keyframes strikingMove {
-  0% { background-position: 0% 50%;}
-  100% { background-position: 100% 50%;}
-}
-.striking-lights {
-  position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(
-      120deg, 
-      rgba(255,255,255,0.08) 0%, 
-      #6dd5ed33 15%, 
-      #1e3c72bb 40%, 
-      #ffefb0cc 60%,
-      #6dd5ed44 75%,
-      rgba(255,255,255,0.08) 100%
-  );
-  background-size: 200% 200%;
-  mix-blend-mode: lighten;
-  animation: strikingMove 6s linear infinite alternate;
-  filter: blur(3px);
-}
-`;
+// Removed strikingLightsCSS and animations
 
 const banner = {
   title: "Stay Connected, Stay Ahead!",
@@ -58,7 +34,6 @@ const HeroBannerSlider = () => {
         aspectRatio: `${imgWidth}/${imgHeight}`,
       }}
     >
-      <style>{strikingLightsCSS}</style>
       <Box
         sx={{
           position: "relative",
@@ -75,7 +50,6 @@ const HeroBannerSlider = () => {
           overflow: "hidden",
         }}
       >
-        {/* LCP <img> with all best practices */}
         <img
           src={imageUrl}
           alt={banner.title}
@@ -95,7 +69,7 @@ const HeroBannerSlider = () => {
             borderRadius: isMobile ? 0 : "0 0 32px 32px"
           }}
         />
-        <div className="striking-lights" />
+        {/* Removed striking lights overlay */}
         <Box
           sx={{
             mt: 0,
@@ -112,7 +86,6 @@ const HeroBannerSlider = () => {
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
-            animation: "fadein 1s cubic-bezier(.4,2,.4,1)",
             p: { xs: "0.8rem 0.5rem", md: "1.6rem 2.1rem" },
             bgcolor: "rgba(18, 36, 60, 0.32)",
             boxShadow: "0 2px 14px 0 #6dd5ed22",
