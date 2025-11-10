@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Typography, Button, Grid, Card, CardContent, CardMedia,
-  Chip, Container, Pagination, Select, MenuItem, IconButton, useTheme,
-  useMediaQuery, Slider, Skeleton, Divider
+  Box, Typography, Button, Grid, Container, Pagination, Select, MenuItem, IconButton, useTheme,
+  useMediaQuery, Slider, Divider
 } from '@mui/material';
 import {
-  Favorite, FavoriteBorder, Star, Tune, Close, WhatsApp
+  Tune, Close
 } from '@mui/icons-material';
 import API from '../api/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorAlert from '../components/ErrorAlert';
 import AutoCompleteSearch from '../components/AutoCompleteSearch';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getOptimizedCloudinaryUrl } from "../utils/cloudinaryUrl";
+import ProductCard from '../components/ProductCard'; // <-- Make sure this path is correct!
 
-const FALLBACK_IMAGE = "/fallback.png";
 const PRODUCTS_PER_PAGE_OPTIONS = [12, 24, 48, 96, 200, 500, 1000];
 
 const ProductListingPage = () => {
@@ -167,18 +165,6 @@ const ProductListingPage = () => {
     );
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('en-KE', {
-      style: 'currency',
-      currency: 'KES'
-    }).format(price);
-  };
-
-  const handleBuyOnWhatsApp = (product) => {
-    const message = `I'm interested in: ${product.name}\nPrice: ${formatPrice(product.discountPrice || product.price)}\nLink: ${window.location.origin}/products/${product._id}`;
-    window.open(`https://wa.me/254711111602?text=${encodeURIComponent(message)}`, '_blank');
-  };
-
   const handleProductClick = (id) => {
     navigate(`/products/${id}`);
   };
@@ -269,12 +255,12 @@ const ProductListingPage = () => {
                   min={0}
                   max={500000}
                   step={1000}
-                  valueLabelFormat={formatPrice}
+                  valueLabelFormat={val => `KES ${val.toLocaleString()}`}
                 />
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 2 }}>
-                <Typography variant="body2">{formatPrice(sliderValue[0])}</Typography>
-                <Typography variant="body2">{formatPrice(sliderValue[1])}</Typography>
+                <Typography variant="body2">{sliderValue[0].toLocaleString()}</Typography>
+                <Typography variant="body2">{sliderValue[1].toLocaleString()}</Typography>
               </Box>
             </Box>
 
@@ -411,134 +397,17 @@ const ProductListingPage = () => {
           ) : (
             <>
               <Grid container spacing={3} columns={12}>
-                {products.map((product) => {
-                  const imgUrl = getOptimizedCloudinaryUrl(
-                    product.thumbnail ||
-                    (product.images && product.images[0]) ||
-                    FALLBACK_IMAGE,
-                    { width: 220 }
-                  );
-                  return (
-                    <Grid key={product._id || product.id} sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 4', lg: 'span 3' } }}>
-                      <Card
-                        sx={{
-                          height: '100%',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          borderRadius: 2,
-                          boxShadow: 3,
-                          transition: 'transform 0.3s',
-                          cursor: 'pointer',
-                          '&:hover': {
-                            transform: 'translateY(-5px)',
-                            boxShadow: 6
-                          }
-                        }}
-                        onClick={() => handleProductClick(product._id)}
-                      >
-                        <Box sx={{ position: 'relative' }}>
-                          <CardMedia
-                            component="img"
-                            src={imgUrl}
-                            alt={product.name}
-                            loading="lazy"
-                            width={220}
-                            height={220}
-                            sx={{ objectFit: 'contain', p: 1 }}
-                          />
-                          <IconButton
-                            aria-label="add to wishlist"
-                            onClick={e => { e.stopPropagation(); toggleWishlist(product._id); }}
-                            sx={{
-                              position: 'absolute',
-                              top: 8,
-                              right: 8,
-                              backgroundColor: 'background.paper',
-                              '&:hover': {
-                                backgroundColor: 'background.default'
-                              }
-                            }}
-                          >
-                            {wishlist.includes(product._id) ? (
-                              <Favorite color="error" />
-                            ) : (
-                              <FavoriteBorder />
-                            )}
-                          </IconButton>
-                          {product.isOnSale && product.discountPrice && (
-                            <Chip
-                              label={`${Math.round((1 - product.discountPrice / product.price) * 100)}% OFF`}
-                              color="error"
-                              size="small"
-                              sx={{
-                                position: 'absolute',
-                                bottom: 8,
-                                left: 8,
-                                fontWeight: 600
-                              }}
-                            />
-                          )}
-                        </Box>
-                        <CardContent sx={{ flexGrow: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            {product.brand}
-                          </Typography>
-                          <Typography variant="h6" component="h3" sx={{ mb: 1 }}>
-                            {product.name}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                            <Star color="warning" fontSize="small" />
-                            <Typography variant="body2" sx={{ ml: 0.5 }}>
-                              4.5 {/* Replace with actual rating when available */}
-                            </Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                            <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
-                              {formatPrice(product.discountPrice || product.price)}
-                            </Typography>
-                            {product.discountPrice && (
-                              <Typography variant="body2" color="text.secondary" sx={{ textDecoration: 'line-through' }}>
-                                {formatPrice(product.price)}
-                              </Typography>
-                            )}
-                          </Box>
-                          <Box sx={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 0.5,
-                            mb: 2
-                          }}>
-                            {product.specs?.storage && (
-                              <Chip
-                                label={`Storage: ${product.specs.storage}`}
-                                size="small"
-                                variant="outlined"
-                              />
-                            )}
-                            {product.specs?.ram && (
-                              <Chip
-                                label={`RAM: ${product.specs.ram}`}
-                                size="small"
-                                variant="outlined"
-                              />
-                            )}
-                          </Box>
-                        </CardContent>
-                        <Box sx={{ p: 2, pt: 0, display: 'flex', gap: 1 }}>
-                          <Button
-                            variant="contained"
-                            fullWidth
-                            startIcon={<WhatsApp />}
-                            sx={{ borderRadius: '50px' }}
-                            onClick={e => { e.stopPropagation(); handleBuyOnWhatsApp(product); }}
-                          >
-                            Buy on WhatsApp
-                          </Button>
-                        </Box>
-                      </Card>
-                    </Grid>
-                  );
-                })}
+                {products.map((product) => (
+                  <Grid key={product._id || product.id} sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 4', lg: 'span 3' } }}>
+                    <ProductCard
+                      product={product}
+                      isWishlisted={wishlist.includes(product._id)}
+                      onWishlistToggle={toggleWishlist}
+                      showWhatsApp={true}
+                      showViewBtn={true}
+                    />
+                  </Grid>
+                ))}
               </Grid>
               {Math.ceil(totalProducts / filters.limit) > 1 && (
                 <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
