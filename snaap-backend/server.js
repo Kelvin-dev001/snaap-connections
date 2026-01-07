@@ -19,6 +19,7 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const allowedOrigins = [
   'http://localhost:3000',
   'https://snaapconnections.co.ke',
+  "https://next-frontend-tawny-ten.vercel.app", 
   'https://www.snaapconnections.co.ke'
 ];
 
