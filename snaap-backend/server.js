@@ -14,6 +14,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const brandRoutes = require('./routes/brandRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const homepageSectionRoutes = require("./routes/homepageSectionRoutes");
 
 // --- CORS SETUP ---
 const allowedOrigins = [
@@ -50,6 +51,7 @@ app.use('/api/brands', brandRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', reviewRoutes);
+app.use("/api/homepage-sections", homepageSectionRoutes);
 
 // --- HEALTH CHECK ROUTE ---
 app.get('/api/health', (req, res) => {
