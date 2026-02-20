@@ -26,9 +26,10 @@ async function uploadToCloudinary(buffer, filename) {
 // PUBLIC: Get all homepage sections
 router.get("/", async (req, res) => {
   try {
-    const sections = await HomepageSection.find().sort({ order: 1, createdAt: 1 });
+    const sections = await HomepageSection.find().sort({ order: 1, createdAt: 1 }).lean();
     res.json(sections);
   } catch (err) {
+    console.error("Homepage sections GET error:", err);
     res.status(500).json({ message: "Failed to fetch homepage sections" });
   }
 });
@@ -36,10 +37,11 @@ router.get("/", async (req, res) => {
 // PUBLIC: Get one section by key
 router.get("/:key", async (req, res) => {
   try {
-    const section = await HomepageSection.findOne({ sectionKey: req.params.key });
+    const section = await HomepageSection.findOne({ sectionKey: req.params.key }).lean();
     if (!section) return res.status(404).json({ message: "Section not found" });
     res.json(section);
   } catch (err) {
+    console.error("Homepage section GET by key error:", err);
     res.status(500).json({ message: "Failed to fetch section" });
   }
 });
@@ -82,6 +84,7 @@ router.post("/", requireAdmin, upload.any(), async (req, res) => {
 
     res.status(201).json(section);
   } catch (err) {
+    console.error("Homepage section CREATE error:", err);
     res.status(500).json({ message: "Failed to create section" });
   }
 });
@@ -129,6 +132,7 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
     if (!section) return res.status(404).json({ message: "Section not found" });
     res.json(section);
   } catch (err) {
+    console.error("Homepage section UPDATE error:", err);
     res.status(500).json({ message: "Failed to update section" });
   }
 });
@@ -139,6 +143,7 @@ router.delete("/:id", requireAdmin, async (req, res) => {
     await HomepageSection.findByIdAndDelete(req.params.id);
     res.status(204).send();
   } catch (err) {
+    console.error("Homepage section DELETE error:", err);
     res.status(500).json({ message: "Failed to delete section" });
   }
 });
