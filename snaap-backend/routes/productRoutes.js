@@ -7,15 +7,13 @@ const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
 
 const updatedUpload = upload.array('images', 10);
-// SKU generator function (fixes ReferenceError)
+
 function generateSKU(name, brand) {
-  // Simple SKU: first 3 letters of brand and name, timestamp
   const brandPart = brand ? brand.substring(0, 3).toUpperCase() : 'XXX';
   const namePart = name ? name.substring(0, 3).toUpperCase() : 'YYY';
   return `${brandPart}-${namePart}-${Date.now()}`;
 }
 
-// Helper: upload a buffer to Cloudinary
 async function uploadBufferToCloudinary(buffer, filename) {
   return new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
@@ -33,7 +31,6 @@ async function uploadBufferToCloudinary(buffer, filename) {
   });
 }
 
-// Helper: handle existingImages from FormData (array or CSV)
 function getExistingImages(req) {
   if (!req.body.existingImages) return [];
   if (Array.isArray(req.body.existingImages)) return req.body.existingImages;
@@ -42,7 +39,6 @@ function getExistingImages(req) {
   return [];
 }
 
-// Helper to extract specs from flat, nested, or FormData style
 function extractSpecs(body) {
   const specs = {};
   [
@@ -56,7 +52,6 @@ function extractSpecs(body) {
   return specs;
 }
 
-// Helper to extract array fields from FormData or JSON
 function extractArray(field, body) {
   if (Array.isArray(body[`${field}[]`])) return body[`${field}[]`];
   if (body[`${field}[]`]) return [body[`${field}[]`]];
@@ -66,13 +61,11 @@ function extractArray(field, body) {
 }
 
 // GET ALL PRODUCTS (client)
-// GET ALL PRODUCTS (client)
 router.get('/', async (req, res) => {
   try {
     const { category, brand, featured, limit, minPrice, maxPrice, search, dealType, sort, page = 1 } = req.query;
     const query = {};
 
-    // Filter by brand/category **name** (case-insensitive)
     if (brand) query.brand = { $regex: `^${brand}$`, $options: 'i' };
     if (category) query.category = { $regex: `^${category}$`, $options: 'i' };
     if (featured) query.isFeatured = true;
@@ -90,11 +83,13 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    const limitNum = parseInt(limit) || 12;
+    const pageNum = parseInt(page) || 1;
+
+    const total = await Product.countDocuments(query);
+
     let products;
     let sortOption = {};
-    const limitNum = parseInt(limit) || 12;
-
-    // --- RANDOM as default sort ---
     if (!sort || sort === 'random') {
       products = await Product.aggregate([
         { $match: query },
@@ -103,16 +98,19 @@ router.get('/', async (req, res) => {
     } else {
       if (sort === 'price-low' || sort === 'price_asc') sortOption.price = 1;
       if (sort === 'price-high' || sort === 'price_desc') sortOption.price = -1;
-      if (Object.keys(sortOption).length === 0) sortOption.createdAt = -1; // fallback to newest if known sort
+      if (Object.keys(sortOption).length === 0) sortOption.createdAt = -1;
       products = await Product.find(query)
         .limit(limitNum)
-        .skip((parseInt(page) - 1) * limitNum)
+        .skip((pageNum - 1) * limitNum)
         .sort(sortOption);
     }
 
     res.json({
       success: true,
       count: products.length,
+      total,
+      page: pageNum,
+      limit: limitNum,
       products: Array.isArray(products) ? products.map(prod => prod) : []
     });
   } catch (err) {
@@ -202,7 +200,6 @@ router.post('/', updatedUpload, async (req, res) => {
       });
     }
 
-    // Handle images: upload to Cloudinary
     const existingImages = getExistingImages(req);
     let cloudinaryImages = [];
     if (req.files && req.files.length > 0) {
@@ -214,7 +211,6 @@ router.post('/', updatedUpload, async (req, res) => {
     }
     const images = [...existingImages, ...cloudinaryImages];
 
-    // Build product data
     const productData = {
       name,
       price: Number(price),
@@ -245,7 +241,6 @@ router.post('/', updatedUpload, async (req, res) => {
       dealType: req.body.dealType || ""
     };
 
-    // Save product
     const product = new Product(productData);
     const savedProduct = await product.save();
 
@@ -303,7 +298,6 @@ router.put('/:id', updatedUpload, async (req, res) => {
       });
     }
 
-    // Handle images: merge existing and new Cloudinary uploads
     const existingImages = getExistingImages(req);
     let cloudinaryImages = [];
     if (req.files && req.files.length > 0) {
