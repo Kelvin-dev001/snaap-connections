@@ -27,7 +27,7 @@ async function uploadBufferToCloudinary(buffer, filename) {
         resolve(result.secure_url);
       }
     );
-    streamifier.createReadStream(buffer).pipe(stream); 
+    streamifier.createReadStream(buffer).pipe(stream);
   });
 }
 
@@ -60,7 +60,9 @@ function extractArray(field, body) {
   return [];
 }
 
-// GET ALL PRODUCTS (client)
+// ─── PUBLIC ROUTES ───────────────────────────────────────────────
+
+// GET ALL PRODUCTS
 router.get('/', async (req, res) => {
   try {
     const { category, brand, featured, limit, minPrice, maxPrice, search, dealType, sort, page = 1 } = req.query;
@@ -98,6 +100,7 @@ router.get('/', async (req, res) => {
     } else {
       if (sort === 'price-low' || sort === 'price_asc') sortOption.price = 1;
       if (sort === 'price-high' || sort === 'price_desc') sortOption.price = -1;
+      if (sort === 'newest') sortOption.createdAt = -1;
       if (Object.keys(sortOption).length === 0) sortOption.createdAt = -1;
       products = await Product.find(query)
         .limit(limitNum)
@@ -111,7 +114,7 @@ router.get('/', async (req, res) => {
       total,
       page: pageNum,
       limit: limitNum,
-      products: Array.isArray(products) ? products.map(prod => prod) : []
+      products: Array.isArray(products) ? products : []
     });
   } catch (err) {
     console.error('Error fetching products:', err);
@@ -127,17 +130,10 @@ router.get('/', async (req, res) => {
 router.get('/brands', async (req, res) => {
   try {
     const brands = await Product.distinct('brand');
-    res.json({ 
-      success: true, 
-      brands 
-    });
+    res.json({ success: true, brands });
   } catch (err) {
     console.error('Error fetching brands:', err);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Failed to fetch brands'
-    });
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to fetch brands' });
   }
 });
 
@@ -145,21 +141,46 @@ router.get('/brands', async (req, res) => {
 router.get('/categories', async (req, res) => {
   try {
     const categories = await Product.distinct('category');
-    res.json({ 
-      success: true, 
-      categories 
-    });
+    res.json({ success: true, categories });
   } catch (err) {
     console.error('Error fetching categories:', err);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Failed to fetch categories'
-    });
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to fetch categories' });
   }
 });
 
-// GET SINGLE PRODUCT BY ID
+// GET ACTIVE DEALS (grouped by dealType, only non-expired)
+router.get('/deals/active', async (req, res) => {
+  try {
+    const now = new Date();
+    const deals = await Product.find({
+      dealType: { $in: ["dealOfTheDay", "flashSale", "limitedOffer"] },
+      $or: [
+        { dealExpiry: null },
+        { dealExpiry: { $exists: false } },
+        { dealExpiry: { $gt: now } },
+      ],
+    }).sort({ dealType: 1, updatedAt: -1 });
+
+    const grouped = {
+      dealOfTheDay: [],
+      flashSale: [],
+      limitedOffer: [],
+    };
+
+    deals.forEach((p) => {
+      if (grouped[p.dealType]) {
+        grouped[p.dealType].push(p);
+      }
+    });
+
+    res.json({ success: true, deals: grouped });
+  } catch (err) {
+    console.error('Error fetching active deals:', err);
+    res.status(500).json({ success: false, message: 'Failed to fetch deals' });
+  }
+});
+
+// GET SINGLE PRODUCT BY ID (must be AFTER /deals/active, /brands, /categories)
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -170,28 +191,21 @@ router.get('/:id', async (req, res) => {
         message: 'Product not found'
       });
     }
-    res.json({ 
-      success: true, 
-      product: product.toObject()
-    });
+    res.json({ success: true, product: product.toObject() });
   } catch (err) {
     console.error('Error fetching product:', err);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Failed to fetch product'
-    });
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to fetch product' });
   }
 });
 
-// --- PROTECTED ROUTES: requireAdmin ---
+// ─── PROTECTED ROUTES ────────────────────────────────────────────
 router.use(requireAdmin);
 
-// --- PRODUCT CREATE ---
+// PRODUCT CREATE
 router.post('/', updatedUpload, async (req, res) => {
   try {
     const { name, price, brand, category } = req.body;
-    
+
     if (!name || !price || !brand || !category) {
       return res.status(400).json({
         success: false,
@@ -204,9 +218,7 @@ router.post('/', updatedUpload, async (req, res) => {
     let cloudinaryImages = [];
     if (req.files && req.files.length > 0) {
       cloudinaryImages = await Promise.all(
-        req.files.map(file =>
-          uploadBufferToCloudinary(file.buffer, file.originalname)
-        )
+        req.files.map(file => uploadBufferToCloudinary(file.buffer, file.originalname))
       );
     }
     const images = [...existingImages, ...cloudinaryImages];
@@ -235,48 +247,35 @@ router.post('/', updatedUpload, async (req, res) => {
       thumbnail: images[0] || null,
       isFeatured: req.body.isFeatured === 'true' || req.body.isActive === 'true' || false,
       isNewRelease: req.body.isNewRelease === 'true' || false,
+      isOnSale: req.body.isOnSale === 'true' || false,
       releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : undefined,
       warrantyPeriod: req.body.warrantyPeriod || '1 year',
       returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30,
-      dealType: req.body.dealType || ""
+      dealType: req.body.dealType || "",
+      dealExpiry: req.body.dealExpiry ? new Date(req.body.dealExpiry) : null,
     };
 
     const product = new Product(productData);
     const savedProduct = await product.save();
 
-    res.status(201).json({
-      success: true,
-      product: savedProduct.toObject()
-    });
+    res.status(201).json({ success: true, product: savedProduct.toObject() });
   } catch (err) {
     console.error('Error creating product:', err);
 
     if (err.code === 11000 && err.keyPattern && err.keyPattern.sku) {
-      return res.status(400).json({
-        success: false,
-        error: 'DUPLICATE_SKU',
-        message: 'SKU already exists'
-      });
+      return res.status(400).json({ success: false, error: 'DUPLICATE_SKU', message: 'SKU already exists' });
     }
 
     if (err.name === 'ValidationError') {
       const errors = Object.values(err.errors).map(e => e.message);
-      return res.status(400).json({
-        success: false,
-        error: 'VALIDATION_ERROR',
-        messages: errors
-      });
+      return res.status(400).json({ success: false, error: 'VALIDATION_ERROR', messages: errors });
     }
 
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Failed to create product'
-    });
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to create product' });
   }
 });
 
-// --- PRODUCT UPDATE ---
+// PRODUCT UPDATE
 router.put('/:id', updatedUpload, async (req, res) => {
   try {
     const { name, price, brand, category } = req.body;
@@ -291,20 +290,14 @@ router.put('/:id', updatedUpload, async (req, res) => {
 
     const existingProduct = await Product.findById(req.params.id);
     if (!existingProduct) {
-      return res.status(404).json({
-        success: false,
-        error: 'NOT_FOUND',
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Product not found' });
     }
 
     const existingImages = getExistingImages(req);
     let cloudinaryImages = [];
     if (req.files && req.files.length > 0) {
       cloudinaryImages = await Promise.all(
-        req.files.map(file =>
-          uploadBufferToCloudinary(file.buffer, file.originalname)
-        )
+        req.files.map(file => uploadBufferToCloudinary(file.buffer, file.originalname))
       );
     }
     const images = [...existingImages, ...cloudinaryImages];
@@ -329,6 +322,7 @@ router.put('/:id', updatedUpload, async (req, res) => {
       sku: typeof req.body.sku !== 'undefined' ? req.body.sku : existingProduct.sku,
       stockQuantity: typeof req.body.stockQuantity !== 'undefined' ? Number(req.body.stockQuantity) : typeof req.body.stock !== 'undefined' ? Number(req.body.stock) : existingProduct.stockQuantity,
       inStock: typeof req.body.inStock !== 'undefined' ? req.body.inStock !== 'false' : existingProduct.inStock,
+      isOnSale: typeof req.body.isOnSale !== 'undefined' ? req.body.isOnSale === 'true' : existingProduct.isOnSale,
       images,
       thumbnail: images[0] || existingProduct.thumbnail,
       isFeatured: typeof req.body.isFeatured !== 'undefined' ? (req.body.isFeatured === 'true' || req.body.isActive === 'true') : existingProduct.isFeatured,
@@ -336,7 +330,12 @@ router.put('/:id', updatedUpload, async (req, res) => {
       releaseDate: typeof req.body.releaseDate !== 'undefined' && req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
       warrantyPeriod: typeof req.body.warrantyPeriod !== 'undefined' ? req.body.warrantyPeriod : existingProduct.warrantyPeriod,
       returnPolicyDays: typeof req.body.returnPolicyDays !== 'undefined' ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays,
-      dealType: typeof req.body.dealType !== 'undefined' ? req.body.dealType : existingProduct.dealType
+      dealType: typeof req.body.dealType !== 'undefined' ? req.body.dealType : existingProduct.dealType,
+      dealExpiry: typeof req.body.dealExpiry !== 'undefined' && req.body.dealExpiry
+        ? new Date(req.body.dealExpiry)
+        : typeof req.body.dealExpiry !== 'undefined'
+          ? null
+          : existingProduct.dealExpiry,
     };
 
     const updatedProduct = await Product.findByIdAndUpdate(
@@ -345,44 +344,26 @@ router.put('/:id', updatedUpload, async (req, res) => {
       { new: true, runValidators: true }
     );
 
-    res.json({
-      success: true,
-      product: updatedProduct.toObject()
-    });
+    res.json({ success: true, product: updatedProduct.toObject() });
   } catch (err) {
     console.error('Error updating product:', err);
     if (!res.headersSent) {
-      res.status(500).json({
-        success: false,
-        error: 'SERVER_ERROR',
-        message: 'Failed to update product'
-      });
+      res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to update product' });
     }
   }
 });
 
-// --- PRODUCT DELETE ---
+// PRODUCT DELETE
 router.delete('/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
-      return res.status(404).json({
-        success: false,
-        error: 'NOT_FOUND',
-        message: 'Product not found'
-      });
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Product not found' });
     }
-    res.json({
-      success: true,
-      message: 'Product deleted successfully'
-    });
+    res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     console.error('Error deleting product:', err);
-    res.status(500).json({
-      success: false,
-      error: 'SERVER_ERROR',
-      message: 'Failed to delete product'
-    });
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to delete product' });
   }
 });
 
