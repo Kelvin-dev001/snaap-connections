@@ -67,6 +67,11 @@ const productSchema = new mongoose.Schema({
   warrantyPeriod: { type: String },
   returnPolicyDays: { type: Number, default: 30 },
 
+  // Soft delete (P1-13 dedup) — reversible; excluded from all public listings.
+  isDeleted: { type: Boolean, default: false },
+  deletedAt: { type: Date, default: null },
+  mergedInto: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
+
   // Timestamps
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }

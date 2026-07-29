@@ -85,6 +85,9 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    // P1-13: never surface soft-deleted (merged-away duplicate) products.
+    query.isDeleted = { $ne: true };
+
     const limitNum = parseInt(limit) || 12;
     const pageNum = parseInt(page) || 1;
 
@@ -129,7 +132,7 @@ router.get('/', async (req, res) => {
 // GET UNIQUE BRANDS
 router.get('/brands', async (req, res) => {
   try {
-    const brands = await Product.distinct('brand');
+    const brands = await Product.distinct('brand', { isDeleted: { $ne: true } });
     res.json({ success: true, brands });
   } catch (err) {
     console.error('Error fetching brands:', err);
@@ -140,7 +143,7 @@ router.get('/brands', async (req, res) => {
 // GET UNIQUE CATEGORIES
 router.get('/categories', async (req, res) => {
   try {
-    const categories = await Product.distinct('category');
+    const categories = await Product.distinct('category', { isDeleted: { $ne: true } });
     res.json({ success: true, categories });
   } catch (err) {
     console.error('Error fetching categories:', err);
@@ -153,6 +156,7 @@ router.get('/deals/active', async (req, res) => {
   try {
     const now = new Date();
     const deals = await Product.find({
+      isDeleted: { $ne: true },
       dealType: { $in: ["dealOfTheDay", "flashSale", "limitedOffer"] },
       $or: [
         { dealExpiry: null },
@@ -184,7 +188,7 @@ router.get('/deals/active', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
-    if (!product) {
+    if (!product || product.isDeleted) {
       return res.status(404).json({
         success: false,
         error: 'NOT_FOUND',
