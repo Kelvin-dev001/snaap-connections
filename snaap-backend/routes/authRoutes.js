@@ -9,8 +9,6 @@ const JWT_EXPIRES_IN = '2h'; // Adjust as needed
 // Admin Login
 router.post('/login', (req, res) => {
   const { password } = req.body;
-  console.log('Received password:', JSON.stringify(password));
-  console.log('ADMIN_PASSWORD:', JSON.stringify(ADMIN_PASSWORD));
   if (password !== ADMIN_PASSWORD) {
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
   }

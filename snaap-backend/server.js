@@ -4,7 +4,8 @@ const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const OpenAI = require("openai");
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 // --- ROUTE IMPORTS ---
 const authRoutes = require('./routes/authRoutes');
@@ -33,6 +34,13 @@ app.options('*', cors({
   credentials: true
 }));
 
+// Security headers (H3). CSP belongs on the frontend (this API serves JSON);
+// CORP is set cross-origin so the Vercel storefront can consume the API.
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
@@ -42,6 +50,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => console.error('MongoDB Error:', err));
+
+// Brute-force protection on admin login only (H2). Deliberately NOT global: many
+// Kenyan mobile customers share carrier-NAT IPs, so a global limiter would throttle
+// real buyers. (In-memory store — fine for a single Render instance.)
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many login attempts. Try again later.' },
+});
+app.use('/api/auth/login', loginLimiter);
 
 // --- API ROUTES ---
 app.use('/api/products', productRoutes);
@@ -58,35 +78,8 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
-// --- DEEPSEEK PRODUCT ADVISOR BOT ROUTE ---
-// Replace OpenAI with DeepSeek using OpenAI SDK but set baseURL and use DeepSeek API key
-const deepseek = new OpenAI({
-  baseURL: 'https://api.deepseek.com',
-  apiKey: process.env.DEEPSEEK_API_KEY
-});
-
-app.post('/api/product-bot', async (req, res) => {
-  const { message } = req.body;
-  try {
-    const response = await deepseek.chat.completions.create({
-      model: "deepseek-chat",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a fun, friendly product advisor for a Kenyan tech shop. Always ask follow-up questions if needed. Help users compare, recommend, and choose tech gadgets."
-        },
-        { role: "user", content: message }
-      ],
-      max_tokens: 600,
-      temperature: 0.8
-    });
-    res.json({ reply: response.choices[0].message.content });
-  } catch (err) {
-    console.error('DeepSeek Error:', err?.response?.data || err);
-    res.status(500).json({ error: "Failed to fetch from DeepSeek" });
-  }
-});
+// (DeepSeek product-bot route removed — H1: it was an unauthenticated LLM proxy on
+// our API key. The frontend bot was retired in P0-12. Revoke DEEPSEEK_API_KEY.)
 
 // --- PORT CONFIGURATION ---
 const PORT = process.env.PORT || 5000;

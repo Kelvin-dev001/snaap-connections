@@ -5,16 +5,19 @@ const Product = require('../models/Product');
 const User = require('../models/User');
 const requireAdmin = require('../middleware/requireAdmin');
 
-// PUBLIC: GET /api/admin/customers (no auth)
+// PROTECTED ROUTES: require admin authentication for all routes below
+router.use(requireAdmin);
+
+// GET /api/admin/customers (admin only — C1: moved below the auth guard; was public)
 router.get('/customers', async (req, res) => {
   try {
-    // Pagination and search support if needed
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const search = req.query.search
+    const limit = Math.min(parseInt(req.query.limit) || 10, 100); // cap page size
+    const term = req.query.search ? String(req.query.search).slice(0, 100) : ''; // coerce (H5) + bound (ReDoS)
+    const search = term
       ? { $or: [
-          { name: new RegExp(req.query.search, 'i') },
-          { email: new RegExp(req.query.search, 'i') }
+          { name: new RegExp(term, 'i') },
+          { email: new RegExp(term, 'i') }
         ]}
       : {};
 
@@ -31,9 +34,6 @@ router.get('/customers', async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch customers' });
   }
 });
-
-// PROTECTED ROUTES: require admin authentication for all routes below
-router.use(requireAdmin);
 
 // GET /api/admin/dashboard (protected)
 router.get('/dashboard', async (req, res) => {
