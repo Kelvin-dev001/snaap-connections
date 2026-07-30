@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'superjwtsecret';
+const JWT_SECRET = process.env.JWT_SECRET; // C3: no public fallback (env is set on Render)
 
 function requireAdmin(req, res, next) {
   const auth = req.headers.authorization;

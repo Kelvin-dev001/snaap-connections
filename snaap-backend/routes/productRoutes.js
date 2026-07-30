@@ -68,20 +68,21 @@ router.get('/', async (req, res) => {
     const { category, brand, featured, limit, minPrice, maxPrice, search, dealType, sort, page = 1 } = req.query;
     const query = {};
 
-    if (brand) query.brand = { $regex: `^${brand}$`, $options: 'i' };
-    if (category) query.category = { $regex: `^${category}$`, $options: 'i' };
+    if (brand) query.brand = { $regex: `^${String(brand)}$`, $options: 'i' };
+    if (category) query.category = { $regex: `^${String(category)}$`, $options: 'i' };
     if (featured) query.isFeatured = true;
-    if (dealType) query.dealType = dealType;
+    if (dealType) query.dealType = String(dealType); // H5: block NoSQL operator injection
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
     if (search) {
+      const searchStr = String(search); // H5: coerce so ?search[$ne]= can't inject an operator
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { brand: { $regex: search, $options: 'i' } },
-        { category: { $regex: search, $options: 'i' } }
+        { name: { $regex: searchStr, $options: 'i' } },
+        { brand: { $regex: searchStr, $options: 'i' } },
+        { category: { $regex: searchStr, $options: 'i' } }
       ];
     }
 

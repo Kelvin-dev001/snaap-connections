@@ -2,14 +2,14 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'secure123';
-const JWT_SECRET = process.env.JWT_SECRET || 'superjwtsecret';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // C3: no public fallback
+const JWT_SECRET = process.env.JWT_SECRET;         // C3: no public fallback
 const JWT_EXPIRES_IN = '2h'; // Adjust as needed
 
 // Admin Login
 router.post('/login', (req, res) => {
   const { password } = req.body;
-  if (password !== ADMIN_PASSWORD) {
+  if (!ADMIN_PASSWORD || password !== ADMIN_PASSWORD) { // fail closed if misconfigured
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
   }
   // Create JWT
