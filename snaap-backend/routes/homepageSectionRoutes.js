@@ -5,6 +5,7 @@ const requireAdmin = require("../middleware/requireAdmin");
 const { upload } = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
+const { validateSection } = require("../utils/sectionValidation");
 
 async function uploadToCloudinary(buffer, filename) {
   return new Promise((resolve, reject) => {
@@ -21,6 +22,19 @@ async function uploadToCloudinary(buffer, filename) {
     );
     streamifier.createReadStream(buffer).pipe(stream);
   });
+}
+
+// Best-effort: refresh the storefront homepage after a section change so a publish
+// or expiry shows immediately instead of waiting for the 60s ISR window. No-ops
+// unless FRONTEND_REVALIDATE_URL + REVALIDATE_TOKEN are set. Fire-and-forget — it
+// never blocks or fails the write.
+function triggerRevalidate() {
+  const url = process.env.FRONTEND_REVALIDATE_URL;
+  const token = process.env.REVALIDATE_TOKEN;
+  if (!url || !token) return;
+  Promise.resolve()
+    .then(() => fetch(url, { method: "POST", headers: { "x-revalidate-token": token } }))
+    .catch((e) => console.warn("Revalidate trigger failed:", e.message));
 }
 
 // PUBLIC: Get all homepage sections
@@ -43,6 +57,20 @@ router.get("/:key", async (req, res) => {
   } catch (err) {
     console.error("Homepage section GET by key error:", err);
     res.status(500).json({ message: "Failed to fetch section" });
+  }
+});
+
+// PROTECTED: Validate a section payload WITHOUT saving. The admin form calls this
+// to show resolved product counts and to block publishing a card that resolves to
+// nothing. Expects application/json (NOT multipart).
+router.post("/validate", requireAdmin, async (req, res) => {
+  try {
+    const { enabled, startsAt, endsAt, items } = req.body || {};
+    const validation = await validateSection({ enabled, startsAt, endsAt, items: items || [] });
+    res.json(validation);
+  } catch (err) {
+    console.error("Homepage section VALIDATE error:", err);
+    res.status(500).json({ message: "Failed to validate section" });
   }
 });
 
@@ -73,15 +101,27 @@ router.post("/", requireAdmin, upload.any(), async (req, res) => {
       items.push({ ...item, image: imageUrl });
     }
 
+    const enabled = String(req.body.enabled) === "true";
+    const startsAt = req.body.startsAt ? new Date(req.body.startsAt) : null;
+    const endsAt = req.body.endsAt ? new Date(req.body.endsAt) : null;
+
+    const validation = await validateSection({ enabled, startsAt, endsAt, items });
+    if (!validation.ok) {
+      return res.status(400).json({ message: "Section has validation errors.", validation });
+    }
+
     const section = await HomepageSection.create({
       sectionKey: req.body.sectionKey,
       title: req.body.title,
       subtitle: req.body.subtitle || "",
-      enabled: String(req.body.enabled) === "true",
+      enabled,
       order: Number(req.body.order || 0),
+      startsAt,
+      endsAt,
       items,
     });
 
+    triggerRevalidate();
     res.status(201).json(section);
   } catch (err) {
     console.error("Homepage section CREATE error:", err);
@@ -116,20 +156,32 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
       items.push({ ...item, image: imageUrl });
     }
 
+    const enabled = String(req.body.enabled) === "true";
+    const startsAt = req.body.startsAt ? new Date(req.body.startsAt) : null;
+    const endsAt = req.body.endsAt ? new Date(req.body.endsAt) : null;
+
+    const validation = await validateSection({ enabled, startsAt, endsAt, items });
+    if (!validation.ok) {
+      return res.status(400).json({ message: "Section has validation errors.", validation });
+    }
+
     const section = await HomepageSection.findByIdAndUpdate(
       req.params.id,
       {
         sectionKey: req.body.sectionKey,
         title: req.body.title,
         subtitle: req.body.subtitle || "",
-        enabled: String(req.body.enabled) === "true",
+        enabled,
         order: Number(req.body.order || 0),
+        startsAt,
+        endsAt,
         items,
       },
       { new: true }
     );
 
     if (!section) return res.status(404).json({ message: "Section not found" });
+    triggerRevalidate();
     res.json(section);
   } catch (err) {
     console.error("Homepage section UPDATE error:", err);
@@ -141,6 +193,7 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
 router.delete("/:id", requireAdmin, async (req, res) => {
   try {
     await HomepageSection.findByIdAndDelete(req.params.id);
+    triggerRevalidate();
     res.status(204).send();
   } catch (err) {
     console.error("Homepage section DELETE error:", err);
