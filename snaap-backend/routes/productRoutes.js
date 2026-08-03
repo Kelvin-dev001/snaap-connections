@@ -71,6 +71,7 @@ router.get('/', async (req, res) => {
     if (brand) query.brand = { $regex: `^${String(brand)}$`, $options: 'i' };
     if (category) query.category = { $regex: `^${String(category)}$`, $options: 'i' };
     if (featured) query.isFeatured = true;
+    if (req.query.lipaMdogoMdogoEligible === 'true') query.lipaMdogoMdogoEligible = true;
     if (dealType) query.dealType = String(dealType); // H5: block NoSQL operator injection
     if (minPrice || maxPrice) {
       query.price = {};
@@ -256,6 +257,8 @@ router.post('/', updatedUpload, async (req, res) => {
       releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : undefined,
       warrantyPeriod: req.body.warrantyPeriod || '1 year',
       returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30,
+      lipaMdogoMdogoEligible: req.body.lipaMdogoMdogoEligible === 'true',
+      lipaMdogoMdogoSummary: req.body.lipaMdogoMdogoSummary || '',
       dealType: req.body.dealType || "",
       dealExpiry: req.body.dealExpiry ? new Date(req.body.dealExpiry) : null,
     };
@@ -335,6 +338,8 @@ router.put('/:id', updatedUpload, async (req, res) => {
       releaseDate: typeof req.body.releaseDate !== 'undefined' && req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
       warrantyPeriod: typeof req.body.warrantyPeriod !== 'undefined' ? req.body.warrantyPeriod : existingProduct.warrantyPeriod,
       returnPolicyDays: typeof req.body.returnPolicyDays !== 'undefined' ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays,
+      lipaMdogoMdogoEligible: typeof req.body.lipaMdogoMdogoEligible !== 'undefined' ? req.body.lipaMdogoMdogoEligible === 'true' : existingProduct.lipaMdogoMdogoEligible,
+      lipaMdogoMdogoSummary: typeof req.body.lipaMdogoMdogoSummary !== 'undefined' ? req.body.lipaMdogoMdogoSummary : existingProduct.lipaMdogoMdogoSummary,
       dealType: typeof req.body.dealType !== 'undefined' ? req.body.dealType : existingProduct.dealType,
       dealExpiry: typeof req.body.dealExpiry !== 'undefined' && req.body.dealExpiry
         ? new Date(req.body.dealExpiry)
