@@ -1,34 +1,35 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
+const { COOKIE_NAME, getTokenFromReq, cookieOptions } = require('../utils/adminToken');
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD; // C3: no public fallback
 const JWT_SECRET = process.env.JWT_SECRET;         // C3: no public fallback
-const JWT_EXPIRES_IN = '2h'; // Adjust as needed
+const JWT_EXPIRES_IN = '2h';
 
-// Admin Login
+// Admin Login — sets an httpOnly cookie (P6-D). The token is NOT returned in the
+// body, so page JavaScript never sees it.
 router.post('/login', (req, res) => {
   const { password } = req.body;
   if (!ADMIN_PASSWORD || password !== ADMIN_PASSWORD) { // fail closed if misconfigured
     return res.status(401).json({ success: false, message: 'Invalid credentials' });
   }
-  // Create JWT
   const token = jwt.sign({ isAdmin: true }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-  res.json({ success: true, token });
-});
-
-// Admin Logout (client will just delete token)
-router.post('/logout', (req, res) => {
+  res.cookie(COOKIE_NAME, token, cookieOptions());
   res.json({ success: true });
 });
 
-// Check login status (frontend sends token in Authorization header)
+// Admin Logout — clears the cookie (attributes must match the ones it was set with).
+router.post('/logout', (req, res) => {
+  const { maxAge, ...clearOpts } = cookieOptions();
+  res.clearCookie(COOKIE_NAME, clearOpts);
+  res.json({ success: true });
+});
+
+// Check login status from the cookie (or Bearer fallback).
 router.get('/check', (req, res) => {
-  const auth = req.headers.authorization;
-  if (!auth || !auth.startsWith('Bearer ')) {
-    return res.json({ isAdmin: false });
-  }
-  const token = auth.split(' ')[1];
+  const token = getTokenFromReq(req);
+  if (!token) return res.json({ isAdmin: false });
   try {
     jwt.verify(token, JWT_SECRET);
     res.json({ isAdmin: true });
