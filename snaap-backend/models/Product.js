@@ -67,6 +67,13 @@ const productSchema = new mongoose.Schema({
   warrantyPeriod: { type: String },
   returnPolicyDays: { type: Number, default: 30 },
 
+  // Lipa Mdogo Mdogo (Safaricom device financing). Eligibility is an explicit
+  // admin-set flag — NEVER inferred from the description (P3e). Terms vary by device
+  // and live in the description; the optional summary is a one-line headline only,
+  // never a global figure.
+  lipaMdogoMdogoEligible: { type: Boolean, default: false },
+  lipaMdogoMdogoSummary: { type: String, default: "" },
+
   // Soft delete (P1-13 dedup) — reversible; excluded from all public listings.
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
