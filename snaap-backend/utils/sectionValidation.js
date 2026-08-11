@@ -15,6 +15,10 @@ const mongoose = require("mongoose");
 const Product = require("../models/Product");
 
 const OUR_CLOUD = "dltfgasbb";
+// P8: sectionKeys beginning with this are hero sliders (hero_slider_top,
+// hero_slider_mid) and carry the extra rules in validateSection below.
+const HERO_SLIDER_PREFIX = "hero_slider";
+const MAX_HERO_SLIDES = 5;
 const SUPPORTED_BROWSE_PARAMS = ["brand", "category", "search", "minPrice", "maxPrice", "dealType"];
 const NEW_IN_STOCK_RE = /new\s*in\s*stock/i;
 const PREORDER_RE = /pre[\s-]?order|order\s*on\s*request/i;
@@ -172,9 +176,36 @@ function truthy(v) {
 async function validateSection(payload = {}) {
   const items = Array.isArray(payload.items) ? payload.items : [];
   const sectionErrors = [];
+  const sectionKey = String(payload.sectionKey || "");
 
   if (payload.startsAt && payload.endsAt && new Date(payload.endsAt) <= new Date(payload.startsAt)) {
     sectionErrors.push("Section end date must be after start date.");
+  }
+
+  // P8 hero sliders. Two placements (hero_slider_top / hero_slider_mid) share
+  // this section model; the only extra rules are a hard slide cap and a
+  // declared link type.
+  //
+  // Requiring ctaType is what makes the cap meaningful: it routes every slide
+  // through validateItem's existing stock resolution, so a banner can't point
+  // at a deleted product or a filter that returns nothing. A full-bleed hero
+  // that lands on an empty listing is the most expensive dead end on the site.
+  //
+  // The image is deliberately NOT checked here: POST /validate runs as an admin
+  // preview before the file is uploaded, and the create/update routes already
+  // reject a saved item with no image.
+  if (sectionKey.startsWith(HERO_SLIDER_PREFIX)) {
+    if (items.length > MAX_HERO_SLIDES) {
+      sectionErrors.push(
+        `A hero slider can hold at most ${MAX_HERO_SLIDES} slides (this one has ${items.length}).`
+      );
+    }
+    items.forEach((item, index) => {
+      if (!item || !item.ctaType) {
+        const label = item && item.title ? `"${item.title}"` : `Slide #${index + 1}`;
+        sectionErrors.push(`${label}: choose what this slide links to.`);
+      }
+    });
   }
 
   // Guard the one-heading invariant at the source: a single section must not carry
@@ -205,4 +236,6 @@ module.exports = {
   parseBrowseParams,
   classifyImage,
   OUR_CLOUD,
+  HERO_SLIDER_PREFIX,
+  MAX_HERO_SLIDES,
 };

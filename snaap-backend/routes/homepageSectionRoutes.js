@@ -5,7 +5,14 @@ const requireAdmin = require("../middleware/requireAdmin");
 const { upload } = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
-const { validateSection } = require("../utils/sectionValidation");
+const { validateSection, HERO_SLIDER_PREFIX, MAX_HERO_SLIDES } = require("../utils/sectionValidation");
+
+// Cheap pre-flight so an over-long hero payload is rejected before its images
+// are streamed to Cloudinary — validateSection would catch it either way, but
+// only after we'd paid for the uploads and orphaned them.
+function heroCapExceeded(sectionKey, items) {
+  return String(sectionKey || "").startsWith(HERO_SLIDER_PREFIX) && items.length > MAX_HERO_SLIDES;
+}
 
 async function uploadToCloudinary(buffer, filename) {
   return new Promise((resolve, reject) => {
@@ -65,8 +72,8 @@ router.get("/:key", async (req, res) => {
 // nothing. Expects application/json (NOT multipart).
 router.post("/validate", requireAdmin, async (req, res) => {
   try {
-    const { enabled, startsAt, endsAt, items } = req.body || {};
-    const validation = await validateSection({ enabled, startsAt, endsAt, items: items || [] });
+    const { sectionKey, enabled, startsAt, endsAt, items } = req.body || {};
+    const validation = await validateSection({ sectionKey, enabled, startsAt, endsAt, items: items || [] });
     res.json(validation);
   } catch (err) {
     console.error("Homepage section VALIDATE error:", err);
@@ -83,6 +90,13 @@ router.post("/", requireAdmin, upload.any(), async (req, res) => {
     });
 
     const rawItems = req.body.items ? JSON.parse(req.body.items) : [];
+
+    if (heroCapExceeded(req.body.sectionKey, rawItems)) {
+      return res
+        .status(400)
+        .json({ message: `A hero slider can hold at most ${MAX_HERO_SLIDES} slides.` });
+    }
+
     const items = [];
 
     for (let i = 0; i < rawItems.length; i++) {
@@ -105,7 +119,7 @@ router.post("/", requireAdmin, upload.any(), async (req, res) => {
     const startsAt = req.body.startsAt ? new Date(req.body.startsAt) : null;
     const endsAt = req.body.endsAt ? new Date(req.body.endsAt) : null;
 
-    const validation = await validateSection({ enabled, startsAt, endsAt, items });
+    const validation = await validateSection({ sectionKey: req.body.sectionKey, enabled, startsAt, endsAt, items });
     if (!validation.ok) {
       return res.status(400).json({ message: "Section has validation errors.", validation });
     }
@@ -138,6 +152,13 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
     });
 
     const rawItems = req.body.items ? JSON.parse(req.body.items) : [];
+
+    if (heroCapExceeded(req.body.sectionKey, rawItems)) {
+      return res
+        .status(400)
+        .json({ message: `A hero slider can hold at most ${MAX_HERO_SLIDES} slides.` });
+    }
+
     const items = [];
 
     for (let i = 0; i < rawItems.length; i++) {
@@ -160,7 +181,7 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
     const startsAt = req.body.startsAt ? new Date(req.body.startsAt) : null;
     const endsAt = req.body.endsAt ? new Date(req.body.endsAt) : null;
 
-    const validation = await validateSection({ enabled, startsAt, endsAt, items });
+    const validation = await validateSection({ sectionKey: req.body.sectionKey, enabled, startsAt, endsAt, items });
     if (!validation.ok) {
       return res.status(400).json({ message: "Section has validation errors.", validation });
     }
