@@ -101,13 +101,23 @@ async function validateItem(item, index) {
     errors.push(`${label}: CTA link must be an internal path (starting with /) or an absolute http(s) URL.`);
   }
 
-  // Image host.
-  const imgClass = classifyImage(item.image);
-  if (imgClass === "demo") {
-    errors.push(`${label}: image is on the Cloudinary demo cloud. Use our own cloud (${OUR_CLOUD}).`);
-  } else if (imgClass === "foreign") {
-    warnings.push(`${label}: image is not on our Cloudinary cloud (${OUR_CLOUD}) — replace before publishing.`);
-  }
+  // Image host. Both artworks get the same treatment: the mobile companion is
+  // served to the majority of our traffic, so it can't be held to a looser
+  // standard than the wide one.
+  [
+    { url: item.image, what: "image" },
+    { url: item.imageMobile, what: "mobile image" },
+  ].forEach(({ url, what }) => {
+    if (!url) return; // mobile is optional; a missing wide image is caught by the route
+    const imgClass = classifyImage(url);
+    if (imgClass === "demo") {
+      errors.push(`${label}: ${what} is on the Cloudinary demo cloud. Use our own cloud (${OUR_CLOUD}).`);
+    } else if (imgClass === "foreign") {
+      warnings.push(
+        `${label}: ${what} is not on our Cloudinary cloud (${OUR_CLOUD}) — replace before publishing.`
+      );
+    }
+  });
 
   const ctaType = item.ctaType || "";
 

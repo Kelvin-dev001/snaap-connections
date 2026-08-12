@@ -31,6 +31,36 @@ async function uploadToCloudinary(buffer, filename) {
   });
 }
 
+// Resolve every card's artwork, uploading whatever files came in with the
+// request. Shared by POST and PUT — they had identical copies of this loop and
+// the P8 mobile companion would have made that a third.
+//
+// Returns { items } on success, or { error } carrying the 400 message.
+async function resolveItemImages(rawItems, filesMap) {
+  const items = [];
+
+  for (let i = 0; i < rawItems.length; i++) {
+    const item = rawItems[i];
+
+    let image = item.image || "";
+    const file = filesMap[`itemImage_${i}`];
+    if (file?.buffer) image = await uploadToCloudinary(file.buffer, file.originalname);
+    if (!image) return { error: `Card #${i + 1} requires an image.` };
+
+    // Optional. Only the hero sliders currently send one; every other section
+    // stores "" and the storefront falls back to the wide artwork.
+    let imageMobile = item.imageMobile || "";
+    const mobileFile = filesMap[`itemImageMobile_${i}`];
+    if (mobileFile?.buffer) {
+      imageMobile = await uploadToCloudinary(mobileFile.buffer, mobileFile.originalname);
+    }
+
+    items.push({ ...item, image, imageMobile });
+  }
+
+  return { items };
+}
+
 // Best-effort: refresh the storefront homepage after a section change so a publish
 // or expiry shows immediately instead of waiting for the 60s ISR window. No-ops
 // unless FRONTEND_REVALIDATE_URL + REVALIDATE_TOKEN are set. Fire-and-forget — it
@@ -97,23 +127,11 @@ router.post("/", requireAdmin, upload.any(), async (req, res) => {
         .json({ message: `A hero slider can hold at most ${MAX_HERO_SLIDES} slides.` });
     }
 
-    const items = [];
-
-    for (let i = 0; i < rawItems.length; i++) {
-      const item = rawItems[i];
-      const file = filesMap[`itemImage_${i}`];
-
-      let imageUrl = item.image || "";
-      if (file?.buffer) {
-        imageUrl = await uploadToCloudinary(file.buffer, file.originalname);
-      }
-
-      if (!imageUrl) {
-        return res.status(400).json({ message: `Card #${i + 1} requires an image.` });
-      }
-
-      items.push({ ...item, image: imageUrl });
+    const resolved = await resolveItemImages(rawItems, filesMap);
+    if (resolved.error) {
+      return res.status(400).json({ message: resolved.error });
     }
+    const items = resolved.items;
 
     const enabled = String(req.body.enabled) === "true";
     const startsAt = req.body.startsAt ? new Date(req.body.startsAt) : null;
@@ -159,23 +177,11 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
         .json({ message: `A hero slider can hold at most ${MAX_HERO_SLIDES} slides.` });
     }
 
-    const items = [];
-
-    for (let i = 0; i < rawItems.length; i++) {
-      const item = rawItems[i];
-      const file = filesMap[`itemImage_${i}`];
-
-      let imageUrl = item.image || "";
-      if (file?.buffer) {
-        imageUrl = await uploadToCloudinary(file.buffer, file.originalname);
-      }
-
-      if (!imageUrl) {
-        return res.status(400).json({ message: `Card #${i + 1} requires an image.` });
-      }
-
-      items.push({ ...item, image: imageUrl });
+    const resolved = await resolveItemImages(rawItems, filesMap);
+    if (resolved.error) {
+      return res.status(400).json({ message: resolved.error });
     }
+    const items = resolved.items;
 
     const enabled = String(req.body.enabled) === "true";
     const startsAt = req.body.startsAt ? new Date(req.body.startsAt) : null;
