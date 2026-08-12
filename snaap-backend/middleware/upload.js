@@ -23,10 +23,17 @@ const fileFilter = (req, file, cb) => {
   cb(null, true);
 };
 
+// A hero slider saves up to 5 slides carrying TWO artworks each (wide + phone),
+// which is exactly 10 files — the old limit, with nothing to spare. Multer
+// rejects the 11th with an error the section routes surface as a generic 500,
+// so the owner would have seen "Failed to save" with no reason. The headroom is
+// cheap: this route is behind requireAdmin and every file is capped at 5MB.
+const MAX_FILES = 12;
+
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: MAX_FILE_SIZE, files: 10 }
+  limits: { fileSize: MAX_FILE_SIZE, files: MAX_FILES }
 });
 
 module.exports = {
