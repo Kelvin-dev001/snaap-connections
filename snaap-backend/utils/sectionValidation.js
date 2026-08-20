@@ -19,6 +19,12 @@ const OUR_CLOUD = "dltfgasbb";
 // hero_slider_mid) and carry the extra rules in validateSection below.
 const HERO_SLIDER_PREFIX = "hero_slider";
 const MAX_HERO_SLIDES = 5;
+// P9: the entry pop-up. Same section model, same scheduling, same validation —
+// the storefront reads it through GET /homepage-sections like everything else.
+// Capped low on purpose: a queue of adverts is a queue of interruptions, and
+// only the first live one is ever shown.
+const POPUP_KEY = "popup_ads";
+const MAX_POPUP_ADS = 3;
 const SUPPORTED_BROWSE_PARAMS = ["brand", "category", "search", "minPrice", "maxPrice", "dealType"];
 const NEW_IN_STOCK_RE = /new\s*in\s*stock/i;
 const PREORDER_RE = /pre[\s-]?order|order\s*on\s*request/i;
@@ -218,6 +224,25 @@ async function validateSection(payload = {}) {
     });
   }
 
+  // P9 pop-up adverts. The rules are the hero slider's, for the same reason: a
+  // declared ctaType routes every advert through validateItem's stock
+  // resolution below, so a pop-up cannot interrupt a visitor to advertise a
+  // product we deleted or a filter that returns nothing. That is the worst
+  // possible first impression, and it is now impossible to save.
+  if (sectionKey === POPUP_KEY) {
+    if (items.length > MAX_POPUP_ADS) {
+      sectionErrors.push(
+        `The pop-up can hold at most ${MAX_POPUP_ADS} adverts (this one has ${items.length}).`
+      );
+    }
+    items.forEach((item, index) => {
+      if (!item || !item.ctaType) {
+        const label = item && item.title ? `"${item.title}"` : `Advert #${index + 1}`;
+        sectionErrors.push(`${label}: choose what this advert links to.`);
+      }
+    });
+  }
+
   // Guard the one-heading invariant at the source: a single section must not carry
   // two announcement cards, or they'd fight over the homepage <h1>.
   const announcements = items.filter((it) => (it && it.type) === "announcement").length;
@@ -248,4 +273,6 @@ module.exports = {
   OUR_CLOUD,
   HERO_SLIDER_PREFIX,
   MAX_HERO_SLIDES,
+  POPUP_KEY,
+  MAX_POPUP_ADS,
 };
