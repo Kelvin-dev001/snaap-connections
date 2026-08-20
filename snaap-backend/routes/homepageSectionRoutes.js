@@ -5,13 +5,20 @@ const requireAdmin = require("../middleware/requireAdmin");
 const { upload } = require("../middleware/upload");
 const cloudinary = require("../config/cloudinary");
 const streamifier = require("streamifier");
-const { validateSection, HERO_SLIDER_PREFIX, MAX_HERO_SLIDES } = require("../utils/sectionValidation");
+const {
+  validateSection, HERO_SLIDER_PREFIX, MAX_HERO_SLIDES, POPUP_KEY, MAX_POPUP_ADS,
+} = require("../utils/sectionValidation");
 
 // Cheap pre-flight so an over-long hero payload is rejected before its images
 // are streamed to Cloudinary — validateSection would catch it either way, but
 // only after we'd paid for the uploads and orphaned them.
 function heroCapExceeded(sectionKey, items) {
   return String(sectionKey || "").startsWith(HERO_SLIDER_PREFIX) && items.length > MAX_HERO_SLIDES;
+}
+
+// Same pre-flight for the entry pop-up (P9).
+function popupCapExceeded(sectionKey, items) {
+  return String(sectionKey || "") === POPUP_KEY && items.length > MAX_POPUP_ADS;
 }
 
 async function uploadToCloudinary(buffer, filename) {
@@ -97,6 +104,12 @@ router.post("/", requireAdmin, upload.any(), async (req, res) => {
         .json({ message: `A hero slider can hold at most ${MAX_HERO_SLIDES} slides.` });
     }
 
+    if (popupCapExceeded(req.body.sectionKey, rawItems)) {
+      return res
+        .status(400)
+        .json({ message: `The pop-up can hold at most ${MAX_POPUP_ADS} adverts.` });
+    }
+
     const items = [];
 
     for (let i = 0; i < rawItems.length; i++) {
@@ -157,6 +170,12 @@ router.put("/:id", requireAdmin, upload.any(), async (req, res) => {
       return res
         .status(400)
         .json({ message: `A hero slider can hold at most ${MAX_HERO_SLIDES} slides.` });
+    }
+
+    if (popupCapExceeded(req.body.sectionKey, rawItems)) {
+      return res
+        .status(400)
+        .json({ message: `The pop-up can hold at most ${MAX_POPUP_ADS} adverts.` });
     }
 
     const items = [];
