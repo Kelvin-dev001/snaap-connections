@@ -10,6 +10,12 @@ const homepageItemSchema = new mongoose.Schema(
     ctaLabel: { type: String, default: "View Service" },
     ctaLink: { type: String, default: "" },
     image: { type: String, default: "" },
+    // P8: optional portrait companion to `image`, used by the homepage hero
+    // sliders for art direction — phones are served this instead of a
+    // centre-crop of the wide banner. Empty for every other kind of card, and
+    // the storefront falls back to `image` when it's missing, so nothing that
+    // predates this field changes behaviour.
+    imageMobile: { type: String, default: "" },
 
     // --- P3: promo-card fields. All optional; existing "service" items (Safaricom
     //     Corner) keep working untouched because every field below defaults. ---
