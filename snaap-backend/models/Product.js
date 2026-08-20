@@ -74,6 +74,19 @@ const productSchema = new mongoose.Schema({
   lipaMdogoMdogoEligible: { type: Boolean, default: false },
   lipaMdogoMdogoSummary: { type: String, default: "" },
 
+  // Safaricom Corner (P9). A FLAG, not a category: a Safaricom router is still a
+  // router and must keep appearing under its own category. Setting a category of
+  // "Safaricom" would have pulled every one of these devices out of the
+  // catalogue the customer actually browses.
+  // Admin-set only — never inferred from the name or description, same rule as
+  // lipaMdogoMdogoEligible above.
+  safaricomExclusive: { type: Boolean, default: false },
+  safaricomType: {
+    type: String,
+    enum: ["", "smartphone", "router", "mifi", "accessory"],
+    default: ""
+  },
+
   // Soft delete (P1-13 dedup) — reversible; excluded from all public listings.
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },

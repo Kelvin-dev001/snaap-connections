@@ -72,6 +72,10 @@ router.get('/', async (req, res) => {
     if (category) query.category = { $regex: `^${String(category)}$`, $options: 'i' };
     if (featured) query.isFeatured = true;
     if (req.query.lipaMdogoMdogoEligible === 'true') query.lipaMdogoMdogoEligible = true;
+    // P9 Safaricom Corner. String-coerced like dealType below — ?safaricomType[$ne]=
+    // must not reach Mongo as an operator.
+    if (req.query.safaricom === 'true') query.safaricomExclusive = true;
+    if (req.query.safaricomType) query.safaricomType = String(req.query.safaricomType);
     if (dealType) query.dealType = String(dealType); // H5: block NoSQL operator injection
     if (minPrice || maxPrice) {
       query.price = {};
@@ -259,6 +263,8 @@ router.post('/', updatedUpload, async (req, res) => {
       returnPolicyDays: req.body.returnPolicyDays ? Number(req.body.returnPolicyDays) : 30,
       lipaMdogoMdogoEligible: req.body.lipaMdogoMdogoEligible === 'true',
       lipaMdogoMdogoSummary: req.body.lipaMdogoMdogoSummary || '',
+      safaricomExclusive: req.body.safaricomExclusive === 'true',
+      safaricomType: req.body.safaricomType || '',
       dealType: req.body.dealType || "",
       dealExpiry: req.body.dealExpiry ? new Date(req.body.dealExpiry) : null,
     };
@@ -340,6 +346,8 @@ router.put('/:id', updatedUpload, async (req, res) => {
       returnPolicyDays: typeof req.body.returnPolicyDays !== 'undefined' ? Number(req.body.returnPolicyDays) : existingProduct.returnPolicyDays,
       lipaMdogoMdogoEligible: typeof req.body.lipaMdogoMdogoEligible !== 'undefined' ? req.body.lipaMdogoMdogoEligible === 'true' : existingProduct.lipaMdogoMdogoEligible,
       lipaMdogoMdogoSummary: typeof req.body.lipaMdogoMdogoSummary !== 'undefined' ? req.body.lipaMdogoMdogoSummary : existingProduct.lipaMdogoMdogoSummary,
+      safaricomExclusive: typeof req.body.safaricomExclusive !== 'undefined' ? req.body.safaricomExclusive === 'true' : existingProduct.safaricomExclusive,
+      safaricomType: typeof req.body.safaricomType !== 'undefined' ? req.body.safaricomType : existingProduct.safaricomType,
       dealType: typeof req.body.dealType !== 'undefined' ? req.body.dealType : existingProduct.dealType,
       dealExpiry: typeof req.body.dealExpiry !== 'undefined' && req.body.dealExpiry
         ? new Date(req.body.dealExpiry)
