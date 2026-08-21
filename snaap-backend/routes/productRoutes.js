@@ -5,6 +5,19 @@ const Product = require('../models/Product');
 const requireAdmin = require('../middleware/requireAdmin');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
+const { triggerRevalidate } = require('../utils/revalidate');
+
+// Storefront pages a product write can leave stale. The Safaricom shelves are
+// the reason this exists: they are ISR at 300s, low-traffic, and serve the stale
+// copy on the first request after the window, so a newly flagged device stayed
+// invisible long enough to look broken.
+//
+// /products/:id is included at the owner's request. It is served by
+// getServerSideProps and is therefore never stale; the endpoint reports it as
+// failed and isolates it, so it costs nothing and breaks nothing.
+function productRevalidatePaths(id) {
+  return ['/safaricom', '/safaricom/devices', `/products/${id}`];
+}
 
 const updatedUpload = upload.array('images', 10);
 
@@ -272,6 +285,8 @@ router.post('/', updatedUpload, async (req, res) => {
     const product = new Product(productData);
     const savedProduct = await product.save();
 
+    triggerRevalidate(productRevalidatePaths(savedProduct._id));
+
     res.status(201).json({ success: true, product: savedProduct.toObject() });
   } catch (err) {
     console.error('Error creating product:', err);
@@ -361,6 +376,8 @@ router.put('/:id', updatedUpload, async (req, res) => {
       updateData,
       { new: true, runValidators: true }
     );
+
+    triggerRevalidate(productRevalidatePaths(updatedProduct._id));
 
     res.json({ success: true, product: updatedProduct.toObject() });
   } catch (err) {

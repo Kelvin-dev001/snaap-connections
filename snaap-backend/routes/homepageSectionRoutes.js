@@ -8,6 +8,9 @@ const streamifier = require("streamifier");
 const {
   validateSection, HERO_SLIDER_PREFIX, MAX_HERO_SLIDES, POPUP_KEY, MAX_POPUP_ADS,
 } = require("../utils/sectionValidation");
+// Shared with productRoutes.js. Called with no paths here: a section change
+// affects the homepage only.
+const { triggerRevalidate } = require("../utils/revalidate");
 
 // Cheap pre-flight so an over-long hero payload is rejected before its images
 // are streamed to Cloudinary — validateSection would catch it either way, but
@@ -66,19 +69,6 @@ async function resolveItemImages(rawItems, filesMap) {
   }
 
   return { items };
-}
-
-// Best-effort: refresh the storefront homepage after a section change so a publish
-// or expiry shows immediately instead of waiting for the 60s ISR window. No-ops
-// unless FRONTEND_REVALIDATE_URL + REVALIDATE_TOKEN are set. Fire-and-forget — it
-// never blocks or fails the write.
-function triggerRevalidate() {
-  const url = process.env.FRONTEND_REVALIDATE_URL;
-  const token = process.env.REVALIDATE_TOKEN;
-  if (!url || !token) return;
-  Promise.resolve()
-    .then(() => fetch(url, { method: "POST", headers: { "x-revalidate-token": token } }))
-    .catch((e) => console.warn("Revalidate trigger failed:", e.message));
 }
 
 // PUBLIC: Get all homepage sections
