@@ -15,6 +15,10 @@ const { triggerRevalidate } = require('../utils/revalidate');
 // /products/:id is included at the owner's request. It is served by
 // getServerSideProps and is therefore never stale; the endpoint reports it as
 // failed and isolates it, so it costs nothing and breaks nothing.
+//
+// Also fired on delete, where the id is the one just removed: /products/:id is
+// gone, but the shelves still need rebuilding or the deleted product keeps
+// showing for up to 5 minutes.
 function productRevalidatePaths(id) {
   return ['/safaricom', '/safaricom/devices', `/products/${id}`];
 }
@@ -395,6 +399,8 @@ router.delete('/:id', async (req, res) => {
     if (!product) {
       return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Product not found' });
     }
+    triggerRevalidate(productRevalidatePaths(req.params.id));
+
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     console.error('Error deleting product:', err);
