@@ -90,6 +90,10 @@ const productSchema = new mongoose.Schema({
   // Soft delete (P1-13 dedup) — reversible; excluded from all public listings.
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
+  // Why it was retired. The P1-13 script writes "P1-13 duplicate" through the
+  // native driver; the admin delete route writes "admin delete". Same shape from
+  // both paths, so one query finds everything that has ever been retired.
+  deletedReason: { type: String, default: "" },
   mergedInto: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', default: null },
 
   // Timestamps

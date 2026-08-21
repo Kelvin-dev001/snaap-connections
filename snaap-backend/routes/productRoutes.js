@@ -5,6 +5,23 @@ const Product = require('../models/Product');
 const requireAdmin = require('../middleware/requireAdmin');
 const cloudinary = require('../config/cloudinary');
 const streamifier = require('streamifier');
+const { triggerRevalidate } = require('../utils/revalidate');
+
+// Storefront pages a product write can leave stale. The Safaricom shelves are
+// the reason this exists: they are ISR at 300s, low-traffic, and serve the stale
+// copy on the first request after the window, so a newly flagged device stayed
+// invisible long enough to look broken.
+//
+// /products/:id is included at the owner's request. It is served by
+// getServerSideProps and is therefore never stale; the endpoint reports it as
+// failed and isolates it, so it costs nothing and breaks nothing.
+//
+// Also fired on delete, where the id is the one just removed: /products/:id is
+// gone, but the shelves still need rebuilding or the deleted product keeps
+// showing for up to 5 minutes.
+function productRevalidatePaths(id) {
+  return ['/safaricom', '/safaricom/devices', `/products/${id}`];
+}
 
 const updatedUpload = upload.array('images', 10);
 
@@ -191,6 +208,22 @@ router.get('/deals/active', async (req, res) => {
 });
 
 // GET SINGLE PRODUCT BY ID (must be AFTER /deals/active, /brands, /categories)
+// ADMIN: products that have been retired, newest first. Guarded inline -- this
+// sits above the public GET /:id (otherwise "deleted" is read as an id) and so
+// above the shared router.use(requireAdmin) further down.
+router.get('/deleted', requireAdmin, async (req, res) => {
+  try {
+    const products = await Product.find({ isDeleted: true })
+      .sort({ deletedAt: -1 })
+      .limit(200)
+      .lean();
+    res.json({ success: true, products, total: products.length });
+  } catch (err) {
+    console.error('Error listing deleted products:', err);
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to list deleted products' });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -271,6 +304,8 @@ router.post('/', updatedUpload, async (req, res) => {
 
     const product = new Product(productData);
     const savedProduct = await product.save();
+
+    triggerRevalidate(productRevalidatePaths(savedProduct._id));
 
     res.status(201).json({ success: true, product: savedProduct.toObject() });
   } catch (err) {
@@ -362,6 +397,8 @@ router.put('/:id', updatedUpload, async (req, res) => {
       { new: true, runValidators: true }
     );
 
+    triggerRevalidate(productRevalidatePaths(updatedProduct._id));
+
     res.json({ success: true, product: updatedProduct.toObject() });
   } catch (err) {
     console.error('Error updating product:', err);
@@ -372,16 +409,72 @@ router.put('/:id', updatedUpload, async (req, res) => {
 });
 
 // PRODUCT DELETE
+// SOFT delete, converged with the P1-13 dedup path in
+// scripts/p1-13-dedup-merge.js, which has always retired products this way.
+//
+// This was findByIdAndDelete, which corrupted history: Order.products[].productId
+// and Review.product both reference Product by _id, so a hard delete left order
+// lines and reviews pointing at a document that no longer existed. The dedup
+// script blocks on exactly that; the admin delete button never checked.
+//
+// Nothing changes for the storefront -- isDeleted is already excluded from the
+// listing, brands, categories, deals, GET /:id and homepage section resolution --
+// except that the product can now come back.
+//
+// There is deliberately no hard-delete route. A permanent purge is a deliberate
+// script run, not a button.
 router.delete('/:id', async (req, res) => {
   try {
-    const product = await Product.findByIdAndDelete(req.params.id);
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, isDeleted: { $ne: true } },
+      { $set: { isDeleted: true, deletedAt: new Date(), deletedReason: 'admin delete' } },
+      { new: true }
+    );
     if (!product) {
       return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'Product not found' });
     }
+    triggerRevalidate(productRevalidatePaths(req.params.id));
+
     res.json({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     console.error('Error deleting product:', err);
     res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to delete product' });
+  }
+});
+
+
+// ADMIN: bring a retired product back.
+//
+// Refuses anything with `mergedInto` set. Those are P1-13 duplicates whose URLs
+// 301 to their survivor in next.config.mjs, so restoring one would publish a
+// product that redirects away from itself. Undoing a merge is the documented
+// one-command rollback in scripts/p1-13-dedup-merge.js, not this route.
+router.post('/:id/restore', async (req, res) => {
+  try {
+    const existing = await Product.findById(req.params.id);
+    if (!existing || !existing.isDeleted) {
+      return res.status(404).json({ success: false, error: 'NOT_FOUND', message: 'No retired product with that id' });
+    }
+    if (existing.mergedInto) {
+      return res.status(409).json({
+        success: false,
+        error: 'MERGED_DUPLICATE',
+        message: 'This product was merged into another during dedup. Undo the merge with the P1-13 rollback instead.',
+      });
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { $set: { isDeleted: false }, $unset: { deletedAt: '', deletedReason: '' } },
+      { new: true }
+    );
+
+    triggerRevalidate(productRevalidatePaths(req.params.id));
+
+    res.json({ success: true, product: product.toObject() });
+  } catch (err) {
+    console.error('Error restoring product:', err);
+    res.status(500).json({ success: false, error: 'SERVER_ERROR', message: 'Failed to restore product' });
   }
 });
 
