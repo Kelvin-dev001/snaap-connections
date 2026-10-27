@@ -64,13 +64,18 @@ const loginLimiter = rateLimit({
 app.use('/api/auth/login', loginLimiter);
 
 // --- API ROUTES ---
+// Reviews MUST be mounted before products. The public review routes live at
+// /api/products/:id/reviews, and productRoutes ends in router.use(requireAdmin):
+// mounted after it, every customer's review read and write was answered 401
+// before it could reach this router (P10-1). reviewRoutes has no router-wide
+// guard, so anything it doesn't match falls through to productRoutes unchanged.
+app.use('/api', reviewRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/brands', brandRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api', reviewRoutes);
 app.use("/api/homepage-sections", homepageSectionRoutes);
 
 // --- HEALTH CHECK ROUTE ---
