@@ -1,8 +1,10 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const rateLimit = require('express-rate-limit');
 const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Coupon = require('../models/Coupon');
 const { nextSeq } = require('../models/Counter');
 const requireAdmin = require('../middleware/requireAdmin');
 const { priceOrder, computeTotals, zoneForCounty } = require('../utils/pricing');
@@ -12,6 +14,18 @@ const { paymentSummary, allPaid, publicOrder } = require('../utils/orderView');
 const { attachCustomer } = require('../middleware/requireCustomer');
 const { passwordProblem, emailTaken, createCustomer, publicUser, EMAIL_TAKEN_MESSAGE } = require('../utils/accounts');
 const { setCustomerCookie } = require('../utils/customerToken');
+const coupons = require('../utils/coupons');
+
+// P10-5: look a code up for an order going to `method` (delivery/pickup).
+// Returns { coupon } or { error } — an unknown code is never silently dropped.
+async function resolveCoupon(rawCode, method) {
+  const code = coupons.normalizeCode(rawCode);
+  if (!code) return { error: coupons.INVALID_MESSAGE };
+  const coupon = await coupons.findActiveCoupon(code);
+  if (!coupon) return { error: coupons.INVALID_MESSAGE };
+  const problem = method ? coupons.couponProblem(coupon, method) : null;
+  return problem ? { error: problem } : { coupon };
+}
 
 // P10-3: orders are placed on the site (WhatsApp is support only now) and
 // handled in the admin portal. Payment is M-Pesa Buy Goods to the shop's Till;
@@ -153,12 +167,24 @@ router.get('/config', (req, res) => {
 // prices items before delivery is chosen).
 router.post('/quote', async (req, res) => {
   try {
-    const { items, fulfilment } = req.body || {};
+    const { items, fulfilment, couponCode } = req.body || {};
     const productsById = await loadProducts(items);
+    const method = fulfilment ? str(fulfilment.method) : null;
+    // P10-5: a code is checked for existence and fit here; "already used by
+    // you" is checked when the order is placed, so the quote can't be used to
+    // probe which phone numbers have used which coupons.
+    let coupon = null;
+    let couponError = null;
+    if (str(couponCode)) {
+      const found = await resolveCoupon(str(couponCode), method);
+      coupon = found.coupon || null;
+      couponError = found.error || null;
+    }
     const priced = priceOrder({
       items,
       productsById,
-      fulfilment: fulfilment ? { method: str(fulfilment.method), county: str(fulfilment.county) } : null,
+      fulfilment: fulfilment ? { method, county: str(fulfilment.county) } : null,
+      coupon: coupon ? coupons.snapshot(coupon) : null,
     });
     res.json({
       errors: priced.errors,
@@ -168,6 +194,8 @@ router.post('/quote', async (req, res) => {
       totals: priced.totals,
       paymentPlan: priced.paymentPlan,
       dueNow: priced.dueNow,
+      coupon: coupon ? { ...coupons.snapshot(coupon), description: coupons.describe(coupon) } : null,
+      couponError,
     });
   } catch (err) {
     console.error('Error pricing cart:', err);
@@ -179,6 +207,7 @@ router.post('/quote', async (req, res) => {
 // creating an account in the same step.
 router.post('/', placeLimiter, attachCustomer, async (req, res) => {
   let newUser = null;
+  let claimedFor = null; // order id a coupon was claimed for, until the order exists
   try {
     const body = req.body || {};
     const errors = [];
@@ -234,6 +263,22 @@ router.post('/', placeLimiter, attachCustomer, async (req, res) => {
       return res.status(400).json({ message: errors[0] || 'Your cart is empty.', errors });
     }
 
+    // P10-5 coupon: refused outright rather than dropped — the customer was
+    // shown a discount and must not be charged without it unknowingly.
+    let coupon = null;
+    if (str(body.couponCode)) {
+      const found = await resolveCoupon(str(body.couponCode), priced.delivery.method);
+      if (found.error) return res.status(400).json({ code: 'COUPON_INVALID', message: found.error });
+      coupon = found.coupon;
+      const keys = coupons.customerKeys({ phone, email, userId: req.customer ? String(req.customer._id) : null });
+      if (await coupons.alreadyUsed(coupon, keys)) {
+        return res.status(409).json({ code: 'COUPON_USED', message: coupons.USED_MESSAGE });
+      }
+    }
+    const final = coupon
+      ? priceOrder({ items: body.items, productsById, fulfilment, coupon: coupons.snapshot(coupon) })
+      : priced;
+
     // An existing account is never attached silently (owner, P10-4): the
     // customer is asked to sign in, and nothing is placed.
     if (wantsAccount) {
@@ -248,38 +293,59 @@ router.post('/', placeLimiter, attachCustomer, async (req, res) => {
     }
     const account = req.customer || newUser;
 
+    // Claim the coupon BEFORE the order exists, against the id the order will
+    // have: the unique index makes this the one-use-per-customer decision even
+    // when two orders arrive at once.
+    const orderId = new mongoose.Types.ObjectId();
+    if (coupon) {
+      const keys = coupons.customerKeys({ phone, email, userId: account ? String(account._id) : null });
+      try {
+        await coupons.redeem(coupon, keys, orderId);
+        claimedFor = orderId;
+      } catch (e) {
+        if (e.code !== 'COUPON_USED') throw e;
+        if (newUser) await newUser.constructor.deleteOne({ _id: newUser._id }).catch(() => {});
+        newUser = null;
+        return res.status(409).json({ code: 'COUPON_USED', message: coupons.USED_MESSAGE });
+      }
+    }
+
     const order = new Order({
+      _id: orderId,
       orderNumber: `SC-${ORDER_NUMBER_OFFSET + (await nextSeq('order'))}`,
       user: account ? account._id : null,
       customer: { name, phone, email: email || undefined },
-      items: priced.lines,
+      items: final.lines,
       fulfilment: {
-        method: priced.delivery.method,
-        county: priced.delivery.county || undefined,
+        method: final.delivery.method,
+        county: final.delivery.county || undefined,
         town: fulfilment.town || undefined,
         address: fulfilment.address || undefined,
         notes: fulfilment.notes || undefined,
       },
+      ...(coupon ? { coupon: coupons.snapshot(coupon) } : {}),
       totals: {
-        subtotal: priced.totals.subtotal,
-        itemsDiscount: priced.totals.itemsDiscount,
-        deliveryFee: priced.totals.deliveryFee,
-        deliveryDiscount: priced.totals.deliveryDiscount,
-        total: priced.totals.total,
+        subtotal: final.totals.subtotal,
+        itemsDiscount: final.totals.itemsDiscount,
+        deliveryFee: final.totals.deliveryFee,
+        deliveryDiscount: final.totals.deliveryDiscount,
+        total: final.totals.total,
       },
-      deliveryStatus: priced.delivery.status,
-      paymentPlan: priced.paymentPlan,
+      deliveryStatus: final.delivery.status,
+      paymentPlan: final.paymentPlan,
       payments: [],
       status: 'pending',
-      statusHistory: [{ status: 'pending', note: 'Order placed online' }],
+      statusHistory: [{ status: 'pending', note: coupon ? `Order placed online with coupon ${coupon.code}` : 'Order placed online' }],
     });
     if (mpesaCode) {
-      await recordPayment(order, { kind: priced.paymentPlan === 'split' ? 'items' : 'full', mpesaCode, by: 'customer' });
+      await recordPayment(order, { kind: final.paymentPlan === 'split' ? 'items' : 'full', mpesaCode, by: 'customer' });
     }
     await order.save();
-    // The order exists from here on, so the account it references must stay.
+    // The order exists from here on, so the account and the coupon claim it
+    // references must stay.
     const createdUser = newUser;
     newUser = null;
+    claimedFor = null;
 
     if (account) {
       // The first delivery address becomes the account's default for next
@@ -299,8 +365,10 @@ router.post('/', placeLimiter, attachCustomer, async (req, res) => {
     res.status(201).json({ order: publicOrder(order), ...(createdUser ? { account: publicUser(createdUser) } : {}) });
   } catch (err) {
     // An account made in this request is removed again if the order failed, so
-    // a retry doesn't hit "email already registered".
+    // a retry doesn't hit "email already registered" — and a coupon claimed for
+    // the order that never got saved goes back.
     if (newUser) await newUser.constructor.deleteOne({ _id: newUser._id }).catch(() => {});
+    if (claimedFor) await coupons.release(claimedFor).catch(() => {});
     console.error('Error placing order:', err);
     res.status(500).json({ message: 'We could not place your order. Please try again, or contact us.' });
   }
@@ -476,10 +544,27 @@ router.patch('/:id', requireAdmin, async (req, res) => {
       history('paid', 'All payments verified');
     }
 
+    // P10-5: a cancelled order gives its coupon back (released after the save
+    // below); reopening one claims it again first, and is refused if the same
+    // customer has used the coupon on another order meanwhile.
+    let releaseCoupon = false;
     if (body.status !== undefined) {
       const status = str(body.status);
       if (!Order.ORDER_STATUSES.includes(status)) return res.status(400).json({ message: 'Unknown status.' });
       if (status !== order.status) {
+        if (order.coupon?.code && status === 'cancelled') releaseCoupon = true;
+        if (order.coupon?.code && order.status === 'cancelled') {
+          const coupon = await Coupon.findOne({ code: order.coupon.code });
+          if (coupon) {
+            const keys = coupons.customerKeys({ phone: order.customer?.phone, email: order.customer?.email, userId: order.user ? String(order.user) : null });
+            try {
+              await coupons.redeem(coupon, keys, order._id);
+            } catch (e) {
+              if (e.code !== 'COUPON_USED') throw e;
+              return res.status(409).json({ message: `This customer has used coupon ${coupon.code} on another order since, so this order can't be reopened. Place a new order instead.` });
+            }
+          }
+        }
         order.status = status;
         history(status, str(body.statusNote).slice(0, 200) || undefined);
       }
@@ -492,6 +577,7 @@ router.patch('/:id', requireAdmin, async (req, res) => {
     }
 
     await order.save();
+    if (releaseCoupon) await coupons.release(order._id);
     const saved = order.toObject();
     res.json({ order: { ...saved, payment: paymentSummary(saved) } });
   } catch (err) {
@@ -507,6 +593,8 @@ router.delete('/:id', requireAdmin, async (req, res, next) => {
     if (!OBJECT_ID.test(req.params.id)) return res.status(400).json({ message: 'Invalid order id' });
     const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
+    // A deleted order must not keep its customer's coupon used up.
+    await coupons.release(order._id);
     res.status(200).json({ success: true, message: 'Order deleted successfully' });
   } catch (err) {
     next(err);
