@@ -108,6 +108,19 @@ router.get('/', async (req, res) => {
       ];
     }
 
+    // P10-2 wishlist: specific products by id (?ids=a,b,c). Only well-formed
+    // ObjectIds reach the query, so nothing in the list can act as an operator,
+    // and the list is capped. No valid ids means an empty result, not "all".
+    let idList = null;
+    if (req.query.ids) {
+      idList = String(req.query.ids)
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => /^[a-f0-9]{24}$/i.test(s))
+        .slice(0, 100);
+      query._id = { $in: idList };
+    }
+
     // P1-13: never surface soft-deleted (merged-away duplicate) products.
     query.isDeleted = { $ne: true };
 
@@ -118,7 +131,8 @@ router.get('/', async (req, res) => {
 
     let products;
     let sortOption = {};
-    if (!sort || sort === 'random') {
+    // A lookup by id is never a random sample.
+    if ((!sort || sort === 'random') && !idList) {
       products = await Product.aggregate([
         { $match: query },
         { $sample: { size: limitNum } }
