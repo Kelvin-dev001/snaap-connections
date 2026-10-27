@@ -17,6 +17,8 @@ const brandRoutes = require('./routes/brandRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const homepageSectionRoutes = require("./routes/homepageSectionRoutes");
 const customerRoutes = require('./routes/customerRoutes');
+const couponRoutes = require('./routes/couponRoutes');
+const requireAdmin = require('./middleware/requireAdmin');
 
 // --- CORS SETUP ---
 const allowedOrigins = [
@@ -81,6 +83,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/brands', brandRoutes);
+// Coupons (P10-5), admin only. Before /api/admin so its own guard is explicit.
+app.use('/api/admin/coupons', requireAdmin, couponRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/homepage-sections", homepageSectionRoutes);
