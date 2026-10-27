@@ -8,6 +8,10 @@ const requireAdmin = require('../middleware/requireAdmin');
 const { priceOrder, computeTotals, zoneForCounty } = require('../utils/pricing');
 const { normalizeKenyanPhone, normalizeMpesaCode } = require('../utils/phone');
 const BUSINESS = require('../config/business');
+const { paymentSummary, allPaid, publicOrder } = require('../utils/orderView');
+const { attachCustomer } = require('../middleware/requireCustomer');
+const { passwordProblem, emailTaken, createCustomer, publicUser, EMAIL_TAKEN_MESSAGE } = require('../utils/accounts');
+const { setCustomerCookie } = require('../utils/customerToken');
 
 // P10-3: orders are placed on the site (WhatsApp is support only now) and
 // handled in the admin portal. Payment is M-Pesa Buy Goods to the shop's Till;
@@ -70,63 +74,6 @@ async function loadProducts(items) {
     .select('name price discountPrice inStock isDeleted sku thumbnail images')
     .lean();
   return new Map(docs.map((d) => [String(d._id), d]));
-}
-
-// What is owed, part by part. A rejected code counts for nothing; a submitted
-// one is "awaiting check" until an admin verifies it.
-function paymentSummary(order) {
-  const t = order.totals || {};
-  const payments = (order.payments || []).filter((p) => p.status !== 'rejected');
-  const stateOf = (kind, amount) => {
-    if (amount === 0) return 'none';
-    const latest = payments.filter((p) => p.kind === kind).pop();
-    if (!latest) return 'due';
-    return latest.status === 'verified' ? 'verified' : 'submitted';
-  };
-  const itemsTotal = (t.subtotal || 0) - (t.itemsDiscount || 0);
-  if (order.paymentPlan === 'split') {
-    const deliveryTotal = t.deliveryFee == null ? null : t.deliveryFee - (t.deliveryDiscount || 0);
-    return {
-      items: { amount: itemsTotal, state: stateOf('items', itemsTotal) },
-      delivery: deliveryTotal == null
-        ? { amount: null, state: 'awaiting-fee' }
-        : { amount: deliveryTotal, state: stateOf('delivery', deliveryTotal) },
-    };
-  }
-  return { full: { amount: t.total, state: stateOf('full', t.total) } };
-}
-
-const allPaid = (summary) =>
-  Object.values(summary).every((part) => part.state === 'verified' || part.state === 'none');
-
-const maskCode = (code) => (code ? `${'•'.repeat(Math.max(code.length - 4, 0))}${code.slice(-4)}` : '');
-
-// The customer's view: no street address, notes or admin notes, and only the
-// tail of each M-Pesa code. Shown to anyone holding the order number + phone.
-function publicOrder(order) {
-  return {
-    orderNumber: order.orderNumber,
-    createdAt: order.createdAt,
-    status: order.status,
-    items: (order.items || []).map((i) => ({
-      product: i.product, name: i.name, image: i.image,
-      unitPrice: i.unitPrice, quantity: i.quantity, lineTotal: i.lineTotal,
-    })),
-    fulfilment: {
-      method: order.fulfilment?.method,
-      county: order.fulfilment?.county || null,
-      town: order.fulfilment?.town || null,
-    },
-    coupon: order.coupon?.code ? { code: order.coupon.code, percentOff: order.coupon.percentOff } : null,
-    totals: order.totals,
-    deliveryStatus: order.deliveryStatus,
-    paymentPlan: order.paymentPlan,
-    payment: paymentSummary(order),
-    payments: (order.payments || []).map((p) => ({
-      kind: p.kind, status: p.status, submittedAt: p.submittedAt, code: maskCode(p.mpesaCode),
-    })),
-    till: BUSINESS.MPESA_TILL,
-  };
 }
 
 // Add a code for one part of the payment, or correct one still awaiting check.
@@ -228,8 +175,10 @@ router.post('/quote', async (req, res) => {
   }
 });
 
-// Place an order (guest checkout).
-router.post('/', placeLimiter, async (req, res) => {
+// Place an order — as a guest, signed in (P10-4: linked to the account), or
+// creating an account in the same step.
+router.post('/', placeLimiter, attachCustomer, async (req, res) => {
+  let newUser = null;
   try {
     const body = req.body || {};
     const errors = [];
@@ -260,6 +209,15 @@ router.post('/', placeLimiter, async (req, res) => {
       }
     }
 
+    // "Create an account" (guests only). Checked with everything else, before
+    // anything is saved, so a problem never leaves a half-placed order.
+    const wantsAccount = !req.customer && body.createAccount === true;
+    if (wantsAccount) {
+      if (!email) errors.push('Enter your email address to create an account.');
+      const problem = passwordProblem(body.password);
+      if (problem) errors.push(problem);
+    }
+
     const productsById = await loadProducts(body.items);
     const priced = priceOrder({ items: body.items, productsById, fulfilment });
     errors.push(...priced.errors);
@@ -276,8 +234,23 @@ router.post('/', placeLimiter, async (req, res) => {
       return res.status(400).json({ message: errors[0] || 'Your cart is empty.', errors });
     }
 
+    // An existing account is never attached silently (owner, P10-4): the
+    // customer is asked to sign in, and nothing is placed.
+    if (wantsAccount) {
+      const taken = { code: 'EMAIL_TAKEN', message: `${EMAIL_TAKEN_MESSAGE} Or untick "Create an account" to order as a guest.` };
+      if (await emailTaken(email)) return res.status(409).json(taken);
+      try {
+        newUser = await createCustomer({ name, email, phone, password: body.password });
+      } catch (e) {
+        if (e.code === 'EMAIL_TAKEN') return res.status(409).json(taken);
+        throw e;
+      }
+    }
+    const account = req.customer || newUser;
+
     const order = new Order({
       orderNumber: `SC-${ORDER_NUMBER_OFFSET + (await nextSeq('order'))}`,
+      user: account ? account._id : null,
       customer: { name, phone, email: email || undefined },
       items: priced.lines,
       fulfilment: {
@@ -304,9 +277,30 @@ router.post('/', placeLimiter, async (req, res) => {
       await recordPayment(order, { kind: priced.paymentPlan === 'split' ? 'items' : 'full', mpesaCode, by: 'customer' });
     }
     await order.save();
+    // The order exists from here on, so the account it references must stay.
+    const createdUser = newUser;
+    newUser = null;
 
-    res.status(201).json({ order: publicOrder(order) });
+    if (account) {
+      // The first delivery address becomes the account's default for next
+      // time. A convenience only: a failure here must not fail the order.
+      if (order.fulfilment.method === 'delivery' && !account.defaultAddress?.county) {
+        const defaultAddress = { county: order.fulfilment.county, town: order.fulfilment.town, address: order.fulfilment.address };
+        try {
+          await account.constructor.updateOne({ _id: account._id }, { $set: { defaultAddress } });
+          account.defaultAddress = defaultAddress;
+        } catch (e) {
+          console.warn('Could not save default address:', e.message);
+        }
+      }
+      if (createdUser) setCustomerCookie(res, createdUser);
+    }
+
+    res.status(201).json({ order: publicOrder(order), ...(createdUser ? { account: publicUser(createdUser) } : {}) });
   } catch (err) {
+    // An account made in this request is removed again if the order failed, so
+    // a retry doesn't hit "email already registered".
+    if (newUser) await newUser.constructor.deleteOne({ _id: newUser._id }).catch(() => {});
     console.error('Error placing order:', err);
     res.status(500).json({ message: 'We could not place your order. Please try again, or contact us.' });
   }
