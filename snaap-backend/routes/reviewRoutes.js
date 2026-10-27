@@ -21,11 +21,13 @@ router.post('/products/:id/reviews', addProductReview);
 router.get('/reviews/recent', async (req, res) => {
   try {
     const reviews = await Review.find({ isApproved: true })
+      .select('-whatsapp') // the reviewer's phone is for the shop, never public
       .sort('-createdAt')
       .limit(10); // Adjust limit as needed
     res.json({ reviews });
   } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch recent reviews', error: error.message });
+    console.error('Error fetching recent reviews:', error);
+    res.status(500).json({ message: 'Failed to fetch recent reviews' });
   }
 });
 

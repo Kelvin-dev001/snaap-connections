@@ -87,6 +87,14 @@ const productSchema = new mongoose.Schema({
     default: ""
   },
 
+  // Reviews (P10-1). Written ONLY by reviewController, from APPROVED reviews:
+  // the average (one decimal) and how many there are. Never set by hand and never
+  // defaulted to a flattering number — a rating with no reviews behind it is the
+  // fake social proof this site has shipped before. 0 means "no reviews yet" and
+  // the storefront hides the stars.
+  rating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 },
+
   // Soft delete (P1-13 dedup) — reversible; excluded from all public listings.
   isDeleted: { type: Boolean, default: false },
   deletedAt: { type: Date, default: null },
