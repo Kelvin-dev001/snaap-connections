@@ -21,8 +21,14 @@ const homepageSectionRoutes = require("./routes/homepageSectionRoutes");
 const allowedOrigins = [
   'http://localhost:3000',
   'https://snaapconnections.co.ke',
-  "https://next-frontend-tawny-ten.vercel.app", 
-  'https://www.snaapconnections.co.ke'
+  "https://next-frontend-tawny-ten.vercel.app",
+  'https://www.snaapconnections.co.ke',
+  // Vercel preview deployments of the storefront (P10-3), so checkout can be
+  // tried on a preview link before it ships. Only this team's scope slug
+  // matches — Vercel reserves it, so no other account can mint such a URL.
+  // Cookies stay first-party to .snaapconnections.co.ke (SameSite=Lax), so a
+  // preview can never act with anyone's admin or customer session.
+  /^https:\/\/next-frontend-[a-z0-9-]+-kelvins-projects-1de5cca3\.vercel\.app$/,
 ];
 
 app.use(cors({
