@@ -16,6 +16,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const brandRoutes = require('./routes/brandRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const homepageSectionRoutes = require("./routes/homepageSectionRoutes");
+const customerRoutes = require('./routes/customerRoutes');
 
 // --- CORS SETUP ---
 const allowedOrigins = [
@@ -83,6 +84,8 @@ app.use('/api/brands', brandRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/homepage-sections", homepageSectionRoutes);
+// Customer accounts (P10-4). Separate cookie and signing key from the admin.
+app.use('/api/customer', customerRoutes);
 
 // --- HEALTH CHECK ROUTE ---
 app.get('/api/health', (req, res) => {
