@@ -36,49 +36,65 @@ router.get('/customers', async (req, res) => {
 });
 
 // GET /api/admin/dashboard (protected)
+// P10-3: reads the online-order fields. Before checkout existed this summed a
+// `totalAmount` field and a 'completed' status that no order ever had.
 router.get('/dashboard', async (req, res) => {
   try {
-    // 1. Total Revenue and Orders (from completed orders)
-    const completedOrders = await Order.find({ status: 'completed' });
-    const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-    const totalOrders = await Order.countDocuments();
-    const pendingOrders = await Order.countDocuments({ status: 'pending' });
+    // Money counts once the shop has checked the payment.
+    const REVENUE_STATUSES = ['paid', 'dispatched', 'delivered'];
+    // An order's value: its total — or, while a Nairobi/Machakos delivery fee
+    // is unconfirmed, its items.
+    const orderValue = {
+      $ifNull: ['$totals.total', {
+        $subtract: [{ $ifNull: ['$totals.subtotal', 0] }, { $ifNull: ['$totals.itemsDiscount', 0] }],
+      }],
+    };
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5, 1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
 
-    // 2. Customers
-    const totalCustomers = await User.countDocuments({ role: 'customer' });
-
-    // 3. Sales by month (last 6 months)
-    const salesByMonth = await Order.aggregate([
-      { $match: { status: 'completed' } },
-      {
-        $group: {
-          _id: { $substr: ['$createdAt', 0, 7] }, // Format: 'YYYY-MM'
-          total: { $sum: '$totalAmount' }
-        }
-      },
-      { $sort: { _id: -1 } },
-      { $limit: 6 }
-    ]);
-    salesByMonth.reverse(); // So it's chronological
-
-    // 4. Product distribution by category (matches your product model)
-    const categoryDist = await Product.aggregate([
-      { $group: { _id: '$category', count: { $sum: 1 } } }
+    const [totalOrders, pendingOrders, paymentsToCheck, totalDelivered, totalCustomers, revenue, salesByMonth, categoryDist, recentOrders] = await Promise.all([
+      Order.countDocuments(),
+      Order.countDocuments({ status: 'pending' }),
+      Order.countDocuments({ status: { $ne: 'cancelled' }, 'payments.status': 'submitted' }),
+      Order.countDocuments({ status: 'delivered' }),
+      User.countDocuments({ role: 'customer' }),
+      Order.aggregate([
+        { $match: { status: { $in: REVENUE_STATUSES } } },
+        { $group: { _id: null, total: { $sum: orderValue } } },
+      ]),
+      Order.aggregate([
+        { $match: { status: { $in: REVENUE_STATUSES }, createdAt: { $gte: sixMonthsAgo } } },
+        { $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: 'Africa/Nairobi' } },
+          total: { $sum: orderValue },
+        } },
+        { $sort: { _id: 1 } },
+      ]),
+      Product.aggregate([
+        { $match: { isDeleted: { $ne: true } } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+      ]),
+      Order.find()
+        .sort({ createdAt: -1 })
+        .limit(5)
+        .select('orderNumber customer.name status totals deliveryStatus createdAt')
+        .lean(),
     ]);
 
     res.json({
       success: true,
       stats: {
-        totalRevenue,
+        totalRevenue: revenue[0]?.total || 0,
         totalOrders,
         pendingOrders,
+        paymentsToCheck,
+        totalDelivered,
         totalCustomers,
       },
-      sales: salesByMonth.map(item => ({
-        month: item._id,
-        total: item.total
-      })),
-      productDistribution: categoryDist
+      sales: salesByMonth.map((item) => ({ month: item._id, total: item.total })),
+      productDistribution: categoryDist,
+      recentOrders,
     });
   } catch (err) {
     console.error('Error fetching dashboard stats:', err);
