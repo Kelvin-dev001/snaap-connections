@@ -1,0 +1,8 @@
+# Repo-wide safety net. A secret must not become committable just because a
+# sub-project's own .gitignore is missing or malformed — snaap-backend/.gitignore
+# was UTF-16 encoded, and therefore inert, from creation until Aug 2026.
+.env
+.env.*
+!.env.example
+
+node_modules/
